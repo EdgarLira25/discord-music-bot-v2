@@ -1,4 +1,5 @@
 import os
+from typing import Any
 from dotenv import load_dotenv
 from yt_dlp import YoutubeDL
 from discord import (
@@ -6,9 +7,6 @@ from discord import (
     Intents,
     Message,
     FFmpegPCMAudio,
-    VoiceClient,
-    StageChannel,
-    GroupChannel,
 )
 from access_controller import access_controller
 from utils import (
@@ -21,16 +19,11 @@ from songs import songs
 
 class MyClient(Client):
 
-    FFMPEG_OPTIONS = {
-        "before_options": "-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5",
-        "options": "-vn",
-    }
-    YDL_OPTIONS = {"format": "bestaudio", "noplaylist": "True"}
     song_queue = []
-    voice_client: VoiceClient = None
-    message_channel: GroupChannel = None
-    voice_channel: StageChannel = None
-    atual = None
+    # Any por conta que não consigo importar a tipagem real disso
+    voice_client: Any
+    message_channel: Any
+    voice_channel: Any
 
     async def on_ready(self):
         print("ONLINE")
@@ -40,13 +33,13 @@ class MyClient(Client):
         if await access_controller(message=message, client=self):
 
             self.message_channel = message.channel
-            self.voice_channel = message.author.voice.channel
+            self.voice_channel = message.author.voice.channel  # Tipagem cagada
 
             command = mapper_command(message.content.split(" ")[0])
 
             match command:
                 case "-play":
-                    if self.voice_client == None:
+                    if self.voice_channel:
                         self.voice_client = await self.voice_channel.connect()
                     await self._play(" ".join(message.content.split(" ")[1:]))
                 case "-pause":
@@ -67,15 +60,19 @@ class MyClient(Client):
                     )
 
     def search_yt(self, item):
-        with YoutubeDL(self.YDL_OPTIONS) as ydl:
+        with YoutubeDL({"format": "bestaudio", "noplaylist": "True"}) as ydl:
             try:
-                info = ydl.extract_info(f"ytsearch: {item}", download=False)["entries"][
-                    0
-                ]
-            except Exception:
+
+                if info := ydl.extract_info(f"ytsearch: {item}", download=False):
+                    generated_info = info["entries"][0]
+                    return {
+                        "source": generated_info["url"],
+                        "title": generated_info["title"],
+                    }
                 return False
 
-        return {"source": info["url"], "title": info["title"]}
+            except Exception:
+                return False
 
     def _aux_play(self):
         if len(self.song_queue) > 0 and self.voice_client.is_playing() == False:
@@ -83,11 +80,14 @@ class MyClient(Client):
                 songs.dict_count[self.song_queue[0]["title"]] += 1
             else:
                 songs.dict_count[self.song_queue[0]["title"]] = 1
-            
             songs.save()
             self.voice_client.play(
-                FFmpegPCMAudio(self.song_queue[0]["source"], **self.FFMPEG_OPTIONS),
-                after=lambda e: self._aux_play(),
+                FFmpegPCMAudio(
+                    self.song_queue[0]["source"],
+                    before_options="-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5",
+                    options="-vn",
+                ),
+                after=lambda _: self._aux_play(),
             )
             self.song_queue.pop(0)
 
@@ -107,14 +107,20 @@ class MyClient(Client):
                 songs.dict_count[self.song_queue[0]["title"]] += 1
             else:
                 songs.dict_count[self.song_queue[0]["title"]] = 1
-            
+
             songs.save()
 
             self.voice_client.play(
-                FFmpegPCMAudio(self.song_queue[0]["source"], **self.FFMPEG_OPTIONS),
-                after=lambda e: self._aux_play(),
+                FFmpegPCMAudio(
+                    self.song_queue[0]["source"],
+                    before_options="-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5",
+                    options="-vn",
+                ),
+                after=lambda _: self._aux_play(),
             )
-            await self.send_message(f"""Tocando -> {self.song_queue[0]["title"]}, pela {songs.dict_count[self.song_queue[0]["title"]]}° vez""")
+            await self.send_message(
+                f"""Tocando -> {self.song_queue[0]["title"]}, pela {songs.dict_count[self.song_queue[0]["title"]]}° vez"""
+            )
             self.song_queue.pop(0)
 
     async def _skip(self):
@@ -162,4 +168,4 @@ class MyClient(Client):
 load_dotenv()
 
 client = MyClient(intents=Intents.all())
-client.run(os.environ.get("TOKEN"))
+client.run(os.environ.get("TOKEN", ""))
