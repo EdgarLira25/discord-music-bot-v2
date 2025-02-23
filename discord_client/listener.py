@@ -19,7 +19,7 @@ class Listener(Client):
         super().__init__(intents=intents, **options)
         self.queue_manager = music_queue_manager
 
-    voice_client = None # type: ignore
+    voice_client = None  # type: ignore
 
     def _mapper_command(self, key: str):
         return {
@@ -35,7 +35,7 @@ class Listener(Client):
         print("ONLINE")
 
     async def connect_if_not_connected(self, voice_channel) -> None:
-        if not self.voice_client or not self.voice_client.is_connected(): # type: ignore
+        if not self.voice_client or not self.voice_client.is_connected():  # type: ignore
             self.voice_client: VoiceChannel = await voice_channel.connect()
 
     def _command_controller(self, message: Message) -> bool:
@@ -65,7 +65,11 @@ class Listener(Client):
             self.voice_client,
         )
 
-        if bot.voice_client != self.voice_client:
+        if (
+            bot.message_channel != message.channel
+            or bot.voice_client != self.voice_client
+        ):
+            bot.message_channel = message.channel
             bot.voice_client = self.voice_client
 
         match command:
