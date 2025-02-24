@@ -1,9 +1,9 @@
 import threading
 from typing import Any
 from discord import Client, Intents, Message, TextChannel, VoiceChannel
+from controllers.search import SearchController
 from discord_client.bot.manager import RagdeaBot
 from services.queue.music import MusicQueueManager
-from services.youtube import Youtube
 from utils import clean_word
 
 
@@ -76,12 +76,7 @@ class Listener(Client):
             case "-play":
                 bot.send_queue_message()
                 threading.Thread(
-                    target=(
-                        Youtube().search_single_song
-                        if "https://" not in content[1]
-                        else Youtube().search_by_link
-                    ),
-                    args=(content[1],),
+                    target=SearchController().search_music, args=(content[1])
                 ).start()
             case "-pause":
                 await bot.pause()

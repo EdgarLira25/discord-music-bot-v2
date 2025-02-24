@@ -1,9 +1,9 @@
+from typing import List
 from yt_dlp import YoutubeDL
 from model.music import MusicEvent
 from services.queue.music import MusicQueueManager
 
 
-# TODO: YTB Não Adiciona Música, apenas retorna a metadata, mas não é o que ocorre
 class Youtube:
 
     def __init__(self, queue_manager_provider=MusicQueueManager()) -> None:
@@ -16,19 +16,20 @@ class Youtube:
                 return info["url"]
         return ""
 
-    def search_single_song(self, URL):
+    def search_single_song(self, URL) -> List[MusicEvent]:
         with YoutubeDL({"format": "bestaudio", "noplaylist": "True"}) as ydl:
             if info := ydl.extract_info(f"ytsearch: {URL}", download=False):
                 generated_info = info["entries"][0]
-                self.queue_manager.add_song(
+                return [
                     MusicEvent(
                         source=generated_info["url"],
                         title=generated_info["title"],
                         type_url="audio",
                     )
-                )
+                ]
+        return []
 
-    def search_by_link(self, URL):
+    def search_by_link(self, URL) -> List[MusicEvent]:
         with YoutubeDL(
             {
                 "quiet": True,
@@ -39,21 +40,20 @@ class Youtube:
         ) as ydl:
             if info := ydl.extract_info(URL, download=False):
                 if "entries" in info:
-                    self.queue_manager.add_many_songs(
-                        [
-                            MusicEvent(
-                                type_url="video",
-                                source=item["url"],
-                                title=item["title"],
-                            )
-                            for item in info["entries"]
-                        ]
-                    )
+                    return [
+                        MusicEvent(
+                            type_url="video",
+                            source=item["url"],
+                            title=item["title"],
+                        )
+                        for item in info["entries"]
+                    ]
                 else:
-                    self.queue_manager.add_song(
+                    return [
                         MusicEvent(
                             source=info["url"],
                             title=info["title"],
                             type_url="audio",
                         )
-                    )
+                    ]
+        return []
