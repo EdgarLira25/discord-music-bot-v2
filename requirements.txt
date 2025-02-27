@@ -3,3 +3,4 @@ ffmpeg
 yt_dlp
 python-dotenv
 PyNaCl
+# Optei por não adicionar a versão de cada um para sempre estar no latest de cada lib

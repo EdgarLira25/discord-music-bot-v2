@@ -1,9 +1,24 @@
 from json import loads, dumps
+from threading import Lock
+
+
+class MetaClassSongsCounter(type):
+    "Metaclasse para singleton seguro entre threads"
+
+    _instances = {}
+    _lock: Lock = Lock()
+
+    def __call__(cls, *args, **kwargs):
+        with cls._lock:
+            if cls not in cls._instances:
+                instance = super().__call__(*args, **kwargs)
+                cls._instances[cls] = instance
+        return cls._instances[cls]
 
 
 # NOTE: Idealmente deveria ser usado um database,
 # com uma ORM como SQLAlchemy para contar as músicas
-class SongsCounter:
+class SongsCounter(metaclass=MetaClassSongsCounter):
     def __init__(self) -> None:
         self._dict_count: dict[str, int] = self._load()
         self._load()

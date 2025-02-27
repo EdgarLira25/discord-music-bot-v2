@@ -1,22 +1,17 @@
 from typing import List
 from yt_dlp import YoutubeDL
-from model.music import MusicEvent
-from services.queue.music import MusicQueueManager
+from models.music import MusicEvent
 
 
 class Youtube:
 
-    def __init__(self, queue_manager_provider=MusicQueueManager()) -> None:
-        self.queue_manager = queue_manager_provider
-
-    @staticmethod
-    def get_audio_url(URL) -> str:
+    def get_audio_url(self, URL: str) -> str:
         with YoutubeDL({"format": "bestaudio", "noplaylist": "True"}) as ydl:
             if info := ydl.extract_info(URL, download=False):
                 return info["url"]
         return ""
 
-    def search_single_song(self, URL) -> List[MusicEvent]:
+    def search_single_song(self, URL: str) -> List[MusicEvent]:
         with YoutubeDL({"format": "bestaudio", "noplaylist": "True"}) as ydl:
             if info := ydl.extract_info(f"ytsearch: {URL}", download=False):
                 generated_info = info["entries"][0]

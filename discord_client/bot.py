@@ -1,25 +1,25 @@
 import asyncio
 from typing import Optional
 from discord import FFmpegPCMAudio
-from discord_client.bot.counter import SongsCounter
+from discord_client.counter import SongsCounter
 from threading import Lock
-from model.music import MusicEvent
-from services.queue.music import MusicQueueManager
+from models.music import MusicEvent
+from services.queue_manager import QueueManager
 from services.youtube import Youtube
 
 
 class SingletonRagdeaBotMeta(type):
-    "Metaclasse para singleton seguro entre threads"
+    "Metaclasse para singleton seguro entre threads baseado em chave guild_id"
 
     _instances = {}
     _lock: Lock = Lock()
 
     def __call__(cls, *args, **kwargs):
         with cls._lock:
-            if cls not in cls._instances:
+            if args[0] not in cls._instances:
                 instance = super().__call__(*args, **kwargs)
-                cls._instances[cls] = instance
-        return cls._instances[cls]
+                cls._instances[args[0]] = instance
+        return cls._instances[args[0]]
 
 
 class RagdeaBot(metaclass=SingletonRagdeaBotMeta):
@@ -27,16 +27,18 @@ class RagdeaBot(metaclass=SingletonRagdeaBotMeta):
 
     def __init__(
         self,
+        guild_id: int,
         voice_channel,
         message_channel,
         voice_client,
-        music_manager_provider=MusicQueueManager(),
+        music_manager_provider,
     ) -> None:
+        self.guild_id = guild_id
         self.voice_channel = voice_channel
         self.message_channel = message_channel
         self.voice_client = voice_client
-        self.music_manager = music_manager_provider
-        self.counter = SongsCounter()
+        self.music_manager: QueueManager[MusicEvent] = music_manager_provider
+        self.counter = SongsCounter()  # TODO: SQLAlchemy ORM
 
     async def connect_if_not_connected(self) -> None:
         if not self.voice_client or not self.voice_client.is_connected():
@@ -51,7 +53,7 @@ class RagdeaBot(metaclass=SingletonRagdeaBotMeta):
         url = (
             event.source
             if event.type_url == "audio"
-            else Youtube.get_audio_url(event.source)
+            else Youtube().get_audio_url(event.source)
         )
         self.counter.add(event.title)
         self.voice_client.play(
@@ -65,11 +67,11 @@ class RagdeaBot(metaclass=SingletonRagdeaBotMeta):
             f"""Tocando -> {event.title}, pela {self.counter.get(event.title)}° vez"""
         )
 
-    async def skip(self) -> None:
+    def skip(self) -> None:
         self.voice_client.stop()
         self.send("Pulando Música...")
 
-    async def pause(self) -> None:
+    def pause(self) -> None:
         "Pausa ou despausa a música"
         if self.voice_client.is_paused():
             self.voice_client.resume()
@@ -98,13 +100,13 @@ class RagdeaBot(metaclass=SingletonRagdeaBotMeta):
             self.connect_if_not_connected(), self.voice_client.loop
         )
 
-    async def queue(self) -> None:
+    def queue(self) -> None:
         "Mostra a Fila do Bot"
         if self.music_manager.get_size() > 0:
 
             queue = "\n".join(
                 f"{pos + 1} - {item.title}"
-                for pos, item in enumerate(self.music_manager.get_many_songs())
+                for pos, item in enumerate(self.music_manager.get_many_items())
             )
 
             if self.music_manager.get_size() > 10:
@@ -114,17 +116,19 @@ class RagdeaBot(metaclass=SingletonRagdeaBotMeta):
         else:
             self.send("Nenhuma Música na Fila.")
 
-    async def kill(self) -> None:
+    def kill(self) -> None:
         "Mata e desconecta o bot"
         self.voice_client.stop()
-        await self.voice_client.disconnect()
+        asyncio.run_coroutine_threadsafe(
+            self.voice_client.disconnect(), self.voice_client.loop
+        )
 
-    async def clear(self) -> None:
+    def clear(self) -> None:
         "Limpa Fila do Bot"
         self.music_manager.clear()
         self.send(f"Fila de Músicas Limpa")
 
-    async def help(self) -> None:
+    def help(self) -> None:
         "Mostra comandos do bot"
         self.send(
             """

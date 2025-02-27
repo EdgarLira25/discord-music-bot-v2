@@ -1,9 +1,11 @@
-import threading
-from typing import Any
-from discord import Client, Intents, Message, TextChannel, VoiceChannel
-from controllers.search import SearchController
-from discord_client.bot.manager import RagdeaBot
-from services.queue.music import MusicQueueManager
+from queue import Queue
+from typing import Any, Optional
+from discord import Client, Intents, Message, TextChannel
+from discord_client.bot import RagdeaBot
+from models.music import MusicEvent
+from services.daemons.message import create_messaging_daemon
+from services.daemons.music import create_musics_daemon
+from services.queue_manager import QueueManager
 from utils import clean_word
 
 
@@ -12,14 +14,12 @@ class Listener(Client):
     def __init__(
         self,
         *,
-        music_queue_manager: MusicQueueManager,
         intents: Intents,
         **options: Any,
     ) -> None:
         super().__init__(intents=intents, **options)
-        self.queue_manager = music_queue_manager
 
-    voice_client = None  # type: ignore
+    dict_queue: dict[int, Queue[Message]] = {}
 
     def _mapper_command(self, key: str):
         return {
@@ -34,61 +34,54 @@ class Listener(Client):
     async def on_ready(self):
         print("ONLINE")
 
-    async def connect_if_not_connected(self, voice_channel) -> None:
-        if not self.voice_client or not self.voice_client.is_connected():  # type: ignore
-            self.voice_client: VoiceChannel = await voice_channel.connect()
+    def _get_guild_id_if_valid_command(self, message: Message) -> Optional[int]:
 
-    def _command_controller(self, message: Message) -> bool:
-        if message.author.bot:
-            return False
         if (
-            isinstance(message.channel, TextChannel)
+            message.guild
+            and not message.author.bot
+            and isinstance(message.channel, TextChannel)
             and message.content.startswith("-")
             and "music" in clean_word(message.channel.name)
         ):
-            return True
+            return message.guild.id
 
-        return False
+        return None
 
-    async def on_message(self, message: Message):
-        if not self._command_controller(message):
-            return
-
-        content = message.content.split(" ", 1)
-        command = self._mapper_command(content[0])
-
-        await self.connect_if_not_connected(message.author.voice.channel)  # type: ignore
-
-        bot = RagdeaBot(
-            message.author.voice.channel,  # type: ignore
-            message.channel,
-            self.voice_client,
+    def _valid_command(self, command: str) -> bool:
+        return (
+            True
+            if command in ["-play", "-skip", "-clear", "-kill", "-queue", "-help"]
+            else False
         )
 
-        if (
-            bot.message_channel != message.channel
-            or bot.voice_client != self.voice_client
-        ):
-            bot.message_channel = message.channel
-            bot.voice_client = self.voice_client
+    async def _connect_if_not_connected(self, message: Message):
+        try:
+            return await message.author.voice.channel.connect() # type: ignore
+        except Exception:
+            return None
 
-        match command:
-            case "-play":
-                bot.send_queue_message()
-                threading.Thread(
-                    target=SearchController().search_music, args=(content[1])
-                ).start()
-            case "-pause":
-                await bot.pause()
-            case "-skip":
-                await bot.skip()
-            case "-clear":
-                await bot.clear()
-            case "-kill":
-                await bot.kill()
-            case "-queue":
-                await bot.queue()
-            case "-help":
-                await bot.help()
-            case _:
-                bot.send("Comando não encontrado. Use -help")
+    async def _init_music_bot(self, guild_id: int, message: Message):
+        event_queue = Queue[Message]()
+        self.dict_queue[guild_id] = event_queue
+        music_queue_manager = QueueManager(Queue[MusicEvent]())
+        event_queue_manager = QueueManager(event_queue)
+        voice_client = await self._connect_if_not_connected(message)
+        bot = RagdeaBot(
+            guild_id,
+            message.author.voice.channel,  # type: ignore
+            message.channel,
+            voice_client,
+            music_queue_manager,
+        )
+        create_messaging_daemon(event_queue_manager, music_queue_manager, bot)
+        create_musics_daemon(music_queue_manager, bot)
+
+    async def on_message(self, message: Message):
+        guild_id = self._get_guild_id_if_valid_command(message)
+        if not guild_id or len(self.dict_queue) > 4:
+            return
+
+        if guild_id not in self.dict_queue:
+            await self._init_music_bot(guild_id, message)
+
+        self.dict_queue[guild_id].put(message)
