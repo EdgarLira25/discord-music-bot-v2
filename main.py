@@ -1,5 +1,5 @@
 from discord import Intents
-from discord_client.listener import Listener
+from application.listener import Listener
 from settings.consts import TOKEN
 
 

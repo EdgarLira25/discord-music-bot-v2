@@ -1,7 +1,7 @@
 import threading
 import time
 from discord import Message
-from discord_client.bot import RagdeaBot
+from application.bot import RagdeaBot
 from models.music import MusicEvent
 from services.queue_manager import QueueManager
 from services.youtube import Youtube

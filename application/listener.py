@@ -1,7 +1,7 @@
 from queue import Queue
 from typing import Any, Optional
 from discord import Client, Intents, Message, TextChannel
-from discord_client.bot import RagdeaBot
+from application.bot import RagdeaBot
 from models.music import MusicEvent
 from services.daemons.message import create_messaging_daemon
 from services.daemons.music import create_musics_daemon
@@ -56,7 +56,7 @@ class Listener(Client):
 
     async def _connect_if_not_connected(self, message: Message):
         try:
-            return await message.author.voice.channel.connect() # type: ignore
+            return await message.author.voice.channel.connect()  # type: ignore
         except Exception:
             return None
 
@@ -84,4 +84,4 @@ class Listener(Client):
         if guild_id not in self.dict_queue:
             await self._init_music_bot(guild_id, message)
 
-        self.dict_queue[guild_id].put(message)
+        QueueManager(self.dict_queue[guild_id]).add_item(message)
