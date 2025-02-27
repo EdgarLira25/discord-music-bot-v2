@@ -1,6 +1,6 @@
 from discord import Intents
 from application.listener import Listener
-from settings.consts import TOKEN
+from settings.config import TOKEN
 
 
 if __name__ == "__main__":
