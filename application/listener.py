@@ -6,7 +6,7 @@ from models.music import MusicEvent
 from services.daemons.message import create_messaging_daemon
 from services.daemons.music import create_musics_daemon
 from services.queue_manager import QueueManager
-from utils import clean_word
+from utils.formatters import normalize_text
 
 
 class Listener(Client):
@@ -28,7 +28,7 @@ class Listener(Client):
             and not message.author.bot
             and isinstance(message.channel, TextChannel)
             and message.content.startswith("-")
-            and "music" in clean_word(message.channel.name)
+            and "music" in normalize_text(message.channel.name)
         ):
             return message.guild.id
 
