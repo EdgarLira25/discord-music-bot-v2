@@ -16,8 +16,6 @@ class MetaClassSongsCounter(type):
         return cls._instances[cls]
 
 
-# NOTE: Idealmente deveria ser usado um database,
-# com uma ORM como SQLAlchemy para contar as músicas
 class SongsCounter(metaclass=MetaClassSongsCounter):
     def __init__(self) -> None:
         self._dict_count: dict[str, int] = self._load()

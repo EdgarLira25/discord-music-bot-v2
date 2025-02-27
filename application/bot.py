@@ -1,7 +1,7 @@
 import asyncio
 from typing import Optional
 from discord import FFmpegPCMAudio
-from application.counter import SongsCounter
+from services.songs_counter import SongsCounter
 from threading import Lock
 from models.music import MusicEvent
 from services.queue_manager import QueueManager
