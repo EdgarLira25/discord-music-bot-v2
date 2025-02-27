@@ -21,19 +21,6 @@ class Listener(Client):
 
     dict_queue: dict[int, Queue[Message]] = {}
 
-    def _mapper_command(self, key: str):
-        return {
-            "-p": "-play",
-            "-s": "-skip",
-            "-c": "-clear",
-            "-k": "-kill",
-            "-q": "-queue",
-            "-help": "-help",
-        }.get(key, key)
-
-    async def on_ready(self):
-        print("ONLINE")
-
     def _get_guild_id_if_valid_command(self, message: Message) -> Optional[int]:
 
         if (
@@ -46,13 +33,6 @@ class Listener(Client):
             return message.guild.id
 
         return None
-
-    def _valid_command(self, command: str) -> bool:
-        return (
-            True
-            if command in ["-play", "-skip", "-clear", "-kill", "-queue", "-help"]
-            else False
-        )
 
     async def _connect_if_not_connected(self, message: Message):
         try:
