@@ -2,8 +2,8 @@ from queue import Queue
 from discord import Client, Intents, Message
 from application.bot import RagdeaBot
 from models.music import MusicEvent
-from services.daemons.message import create_messaging_daemon
-from services.daemons.music import create_musics_daemon
+from daemons.message import create_messaging_daemon
+from daemons.music import create_musics_daemon
 from services.queue_manager import QueueManager
 from utils import valid_message
 
