@@ -1,14 +1,14 @@
 import asyncio
+from threading import Lock
 from typing import Optional
 from discord import FFmpegPCMAudio, VoiceClient
-from services.songs_counter import SongsCounter
-from threading import Lock
 from models.music import MusicEvent
+from services.songs_counter import SongsCounter
 from services.queue_manager import QueueManager
 from services.youtube import Youtube
 
 
-class SingletonRagdeaBotMeta(type):
+class SingletonBotMeta(type):
     "Metaclasse para singleton seguro entre threads baseado em chave guild_id"
 
     _instances = {}
@@ -22,8 +22,8 @@ class SingletonRagdeaBotMeta(type):
         return cls._instances[args[0]]
 
 
-class RagdeaBot(metaclass=SingletonRagdeaBotMeta):
-    _instance: Optional["RagdeaBot"] = None
+class Bot(metaclass=SingletonBotMeta):
+    _instance: Optional["Bot"] = None
 
     def __init__(
         self,
@@ -38,7 +38,7 @@ class RagdeaBot(metaclass=SingletonRagdeaBotMeta):
         self.message_channel = message_channel
         self.voice_client: VoiceClient = voice_client
         self.music_manager: QueueManager[MusicEvent] = music_manager_provider
-        self.counter = SongsCounter()  # TODO: SQLAlchemy ORM
+        self.counter = SongsCounter()
 
     def play(self, event: MusicEvent):
 
@@ -79,43 +79,36 @@ class RagdeaBot(metaclass=SingletonRagdeaBotMeta):
             self.message_channel.send(string), self.voice_client.loop
         )
 
-    def send_queue_message(self):
-        "Envia mensagem para o discord"
+    def send_queue_message(self) -> None:
+        "Envia mensagem sobre a fila para o discord"
         if self.voice_client and self.voice_client.is_playing():
             self.send(
                 f"Música(s) Adicionada(s) à Fila -> Posição {self.music_manager.size() + 1}"
             )
 
     def queue(self) -> None:
-        "Mostra a Fila do Bot"
         if self.music_manager.size() > 0:
-
             queue = "\n".join(
                 f"{pos + 1} - {item.title}"
-                for pos, item in enumerate(self.music_manager.get_many())
+                for pos, item in enumerate(self.music_manager.list_many())
             )
-
             if self.music_manager.size() > 10:
                 queue += f"\nTamanho Atual da Fila: {self.music_manager.size()}"
-
             self.send(queue)
         else:
             self.send("Nenhuma Música na Fila.")
 
     def kill(self) -> None:
-        "Mata e desconecta o bot"
         self.voice_client.stop()
         asyncio.run_coroutine_threadsafe(
             self.voice_client.disconnect(), self.voice_client.loop
         )
 
     def clear(self) -> None:
-        "Limpa Fila do Bot"
         self.music_manager.clear()
-        self.send(f"Fila de Músicas Limpa")
+        self.send("Fila de Músicas Limpa")
 
     def help(self) -> None:
-        "Mostra comandos do bot"
         self.send(
             """
 ```-p ou -play <Musica> -> Adiciona Música na Fila

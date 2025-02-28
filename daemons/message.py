@@ -1,8 +1,10 @@
+"""Módulo que consome os eventos da fila de message"""
+
 from asyncio import AbstractEventLoop, run_coroutine_threadsafe
 import threading
 import time
-from discord import Message
-from application.bot import RagdeaBot
+from discord import ClientException, Message
+from application.bot import Bot
 from models.music import MusicEvent
 from services.queue_manager import QueueManager
 from services.youtube import Youtube
@@ -14,7 +16,7 @@ class MessageEventDaemon(threading.Thread):
         self,
         event_queue: QueueManager[Message],
         music_queue: QueueManager[MusicEvent],
-        bot_provider: RagdeaBot,
+        bot_provider: Bot,
         event_loop: AbstractEventLoop,
     ) -> None:
         super().__init__()
@@ -26,8 +28,11 @@ class MessageEventDaemon(threading.Thread):
 
     def _reconnect(self, message: Message):
         try:
-            return run_coroutine_threadsafe(message.author.voice.channel.connect(), self.event_loop).result(10)  # type: ignore
-        except Exception:
+            return run_coroutine_threadsafe(
+                message.author.voice.channel.connect(),  # type: ignore
+                self.event_loop,
+            ).result(10)
+        except ClientException:
             return None
 
     def _sync_bot_variables(self, message: Message):
@@ -99,7 +104,7 @@ class MessageEventDaemon(threading.Thread):
 def create_messaging_daemon(
     event_manager: QueueManager[Message],
     music_manager: QueueManager[MusicEvent],
-    bot_provider: RagdeaBot,
+    bot_provider: Bot,
     event_loop: AbstractEventLoop,
 ):
     MessageEventDaemon(event_manager, music_manager, bot_provider, event_loop).start()

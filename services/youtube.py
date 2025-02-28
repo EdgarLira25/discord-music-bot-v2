@@ -1,3 +1,4 @@
+"Wrapper ao redor do YoutubeDL"
 from typing import List
 from yt_dlp import YoutubeDL
 from models.music import MusicEvent
@@ -6,15 +7,17 @@ from models.music import MusicEvent
 class Youtube:
 
     @staticmethod
-    def get_audio_url(URL: str) -> str:
+    def get_audio_url(url: str) -> str:
+        """Busca url do áudio de um video"""
         with YoutubeDL({"format": "bestaudio", "noplaylist": "True"}) as ydl:
-            if info := ydl.extract_info(URL, download=False):
+            if info := ydl.extract_info(url, download=False):
                 return info["url"]
         return ""
 
-    def search_single_song(self, URL: str) -> List[MusicEvent]:
+    def search_single_song(self, url: str) -> List[MusicEvent]:
+        """Busca uma música"""
         with YoutubeDL({"format": "bestaudio", "noplaylist": "True"}) as ydl:
-            if info := ydl.extract_info(f"ytsearch: {URL}", download=False):
+            if info := ydl.extract_info(f"ytsearch: {url}", download=False):
                 generated_info = info["entries"][0]
                 return [
                     MusicEvent(
@@ -25,7 +28,8 @@ class Youtube:
                 ]
         return []
 
-    def search_by_link(self, URL) -> List[MusicEvent]:
+    def search_by_link(self, url) -> List[MusicEvent]:
+        """Faz uma busca por link, retornando uma musica ou lista de música(playlist)"""
         with YoutubeDL(
             {
                 "quiet": True,
@@ -34,7 +38,7 @@ class Youtube:
                 "skip_download": True,
             }
         ) as ydl:
-            if info := ydl.extract_info(URL, download=False):
+            if info := ydl.extract_info(url, download=False):
                 if "entries" in info:
                     return [
                         MusicEvent(
@@ -44,12 +48,11 @@ class Youtube:
                         )
                         for item in info["entries"]
                     ]
-                else:
-                    return [
-                        MusicEvent(
-                            source=info["url"],
-                            title=info["title"],
-                            type_url="audio",
-                        )
-                    ]
+                return [
+                    MusicEvent(
+                        source=info["url"],
+                        title=info["title"],
+                        type_url="audio",
+                    )
+                ]
         return []

@@ -1,6 +1,8 @@
+"Módulo do daemon que consome a fila de músicas do bot"
+
 import threading
 import time
-from application.bot import RagdeaBot
+from application.bot import Bot
 from models.music import MusicEvent
 from services.queue_manager import QueueManager
 
@@ -8,7 +10,7 @@ from services.queue_manager import QueueManager
 class MusicsEventDaemon(threading.Thread):
 
     def __init__(
-        self, queue_manager_provider: QueueManager[MusicEvent], bot_provider: RagdeaBot
+        self, queue_manager_provider: QueueManager[MusicEvent], bot_provider: Bot
     ) -> None:
         super().__init__()
         self.bot = bot_provider
@@ -32,6 +34,6 @@ class MusicsEventDaemon(threading.Thread):
 
 
 def create_musics_daemon(
-    music_queue_manager_provider: QueueManager[MusicEvent], bot_provider: RagdeaBot
+    music_queue_manager_provider: QueueManager[MusicEvent], bot_provider: Bot
 ):
     MusicsEventDaemon(music_queue_manager_provider, bot_provider).start()

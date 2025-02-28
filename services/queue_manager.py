@@ -1,11 +1,14 @@
+"""Gerenciador de Fila Genérico"""
+
 import time
-from queue import Empty, Queue
+from queue import Empty, Full, Queue
 from typing import Generic, TypeVar
 
 T = TypeVar("T")
 
 
 class QueueManager(Generic[T]):
+
     def __init__(self, queue: Queue[T]) -> None:
         self.queue = queue
 
@@ -14,7 +17,7 @@ class QueueManager(Generic[T]):
             try:
                 self.queue.put(item, block=False)
                 return
-            except:
+            except Full:
                 time.sleep(0.1)
 
     def add_many(self, items: list[T]):
@@ -24,21 +27,19 @@ class QueueManager(Generic[T]):
             try:
                 self.queue.put(items[index], block=False)
                 index += 1
-            except:
+            except Full:
                 time.sleep(0.1)
 
-    def get_many(self, limit: int = 10) -> list[T]:
-        """Retorna os primeiros `limit` itens da fila."""
-        return list(self.queue.queue)[:limit]
+    def list_many(self, n: int = 10) -> list[T]:
+        """Retorna os primeiros n itens da fila."""
+        return list(self.queue.queue)[:n]
 
     def get(self) -> T:
-        item: T | None = None
-        while item is None:
+        while True:
             try:
-                item = self.queue.get(block=False)
+                return self.queue.get(block=False)
             except Empty:
                 time.sleep(0.1)
-        return item
 
     def size(self) -> int:
         return self.queue.qsize()
