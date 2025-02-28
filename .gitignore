@@ -1,0 +1,7 @@
+__pycache__
+.env
+contador.json
+venv
+.pytest_cache
+.tox
+.coverage
