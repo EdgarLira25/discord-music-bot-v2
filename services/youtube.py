@@ -5,7 +5,8 @@ from models.music import MusicEvent
 
 class Youtube:
 
-    def get_audio_url(self, URL: str) -> str:
+    @staticmethod
+    def get_audio_url(URL: str) -> str:
         with YoutubeDL({"format": "bestaudio", "noplaylist": "True"}) as ydl:
             if info := ydl.extract_info(URL, download=False):
                 return info["url"]

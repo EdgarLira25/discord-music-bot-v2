@@ -57,7 +57,7 @@ class MessageEventDaemon(threading.Thread):
             if "https://" not in search
             else ytb.search_by_link(search)
         )
-        self.music_queue.add_many_items(songs)
+        self.music_queue.add_many(songs)
 
     def process(self, command, content):
         match command:
@@ -84,8 +84,8 @@ class MessageEventDaemon(threading.Thread):
 
     def _loop(self):
         while True:
-            if self.event_queue.get_size() > 0:
-                event = self.event_queue.get_item()
+            if self.event_queue.size() > 0:
+                event = self.event_queue.get()
                 content = event.content.split(" ", 1)
                 command = self._mapper_command(content[0])
                 self._sync_bot_variables(event)

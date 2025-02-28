@@ -15,13 +15,13 @@ class MusicsEventDaemon(threading.Thread):
         self.queue_manager = queue_manager_provider
 
     def process(self):
-        self.bot.play(self.queue_manager.get_item())
+        self.bot.play(self.queue_manager.get())
 
     def _loop(self):
         while True:
             if (
                 self.bot.voice_client
-                and self.queue_manager.get_size() > 0
+                and self.queue_manager.size() > 0
                 and not self.bot.voice_client.is_playing()
             ):
                 self.process()

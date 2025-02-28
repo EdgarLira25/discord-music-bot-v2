@@ -38,4 +38,4 @@ class Listener(Client):
         if guild_id not in self.dict_queue:
             await self._init_bot_instance(guild_id, message)
 
-        QueueManager(self.dict_queue[guild_id]).add_item(message)
+        QueueManager(self.dict_queue[guild_id]).add(message)

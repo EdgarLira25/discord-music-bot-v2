@@ -45,7 +45,7 @@ class RagdeaBot(metaclass=SingletonRagdeaBotMeta):
         url = (
             event.source
             if event.type_url == "audio"
-            else Youtube().get_audio_url(event.source)
+            else Youtube.get_audio_url(event.source)
         )
         self.counter.add(event.title)
         self.voice_client.play(
@@ -83,20 +83,20 @@ class RagdeaBot(metaclass=SingletonRagdeaBotMeta):
         "Envia mensagem para o discord"
         if self.voice_client and self.voice_client.is_playing():
             self.send(
-                f"Música(s) Adicionada(s) à Fila -> Posição {self.music_manager.get_size() + 1}"
+                f"Música(s) Adicionada(s) à Fila -> Posição {self.music_manager.size() + 1}"
             )
 
     def queue(self) -> None:
         "Mostra a Fila do Bot"
-        if self.music_manager.get_size() > 0:
+        if self.music_manager.size() > 0:
 
             queue = "\n".join(
                 f"{pos + 1} - {item.title}"
-                for pos, item in enumerate(self.music_manager.get_many_items())
+                for pos, item in enumerate(self.music_manager.get_many())
             )
 
-            if self.music_manager.get_size() > 10:
-                queue += f"\nTamanho Atual da Fila: {self.music_manager.get_size()}"
+            if self.music_manager.size() > 10:
+                queue += f"\nTamanho Atual da Fila: {self.music_manager.size()}"
 
             self.send(queue)
         else:
