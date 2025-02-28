@@ -32,28 +32,23 @@ class Listener(Client):
         ):
             return message.guild.id
 
-        return None
 
-    async def _connect_if_not_connected(self, message: Message):
-        try:
-            return await message.author.voice.channel.connect()  # type: ignore
-        except Exception:
-            return None
-
-    async def _init_music_bot(self, guild_id: int, message: Message):
+    async def _init_bot_instance(self, guild_id: int, message: Message):
+        music_queue = Queue[MusicEvent]()
+        music_queue_manager = QueueManager(music_queue)
         event_queue = Queue[Message]()
-        self.dict_queue[guild_id] = event_queue
-        music_queue_manager = QueueManager(Queue[MusicEvent]())
         event_queue_manager = QueueManager(event_queue)
-        voice_client = await self._connect_if_not_connected(message)
+        self.dict_queue[guild_id] = event_queue
         bot = RagdeaBot(
             guild_id,
             message.author.voice.channel,  # type: ignore
             message.channel,
-            voice_client,
+            None,
             music_queue_manager,
         )
-        create_messaging_daemon(event_queue_manager, music_queue_manager, bot)
+        create_messaging_daemon(
+            event_queue_manager, music_queue_manager, bot, self.loop
+        )
         create_musics_daemon(music_queue_manager, bot)
 
     async def on_message(self, message: Message):
@@ -62,6 +57,6 @@ class Listener(Client):
             return
 
         if guild_id not in self.dict_queue:
-            await self._init_music_bot(guild_id, message)
+            await self._init_bot_instance(guild_id, message)
 
         QueueManager(self.dict_queue[guild_id]).add_item(message)

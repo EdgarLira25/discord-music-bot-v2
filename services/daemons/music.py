@@ -20,7 +20,8 @@ class MusicsEventDaemon(threading.Thread):
     def _loop(self):
         while True:
             if (
-                self.queue_manager.get_size() > 0
+                self.bot.voice_client
+                and self.queue_manager.get_size() > 0
                 and not self.bot.voice_client.is_playing()
             ):
                 self.process()

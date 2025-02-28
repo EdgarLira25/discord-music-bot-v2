@@ -1,6 +1,6 @@
 import asyncio
 from typing import Optional
-from discord import FFmpegPCMAudio
+from discord import FFmpegPCMAudio, VoiceClient
 from services.songs_counter import SongsCounter
 from threading import Lock
 from models.music import MusicEvent
@@ -36,19 +36,11 @@ class RagdeaBot(metaclass=SingletonRagdeaBotMeta):
         self.guild_id = guild_id
         self.voice_channel = voice_channel
         self.message_channel = message_channel
-        self.voice_client = voice_client
+        self.voice_client: VoiceClient = voice_client
         self.music_manager: QueueManager[MusicEvent] = music_manager_provider
         self.counter = SongsCounter()  # TODO: SQLAlchemy ORM
 
-    async def connect_if_not_connected(self) -> None:
-        if not self.voice_client or not self.voice_client.is_connected():
-            self.voice_client = await self.voice_channel.connect()  # type: ignore
-
     def play(self, event: MusicEvent):
-
-        asyncio.run_coroutine_threadsafe(
-            self.connect_if_not_connected(), self.voice_client.loop
-        )
 
         url = (
             event.source
@@ -89,16 +81,10 @@ class RagdeaBot(metaclass=SingletonRagdeaBotMeta):
 
     def send_queue_message(self):
         "Envia mensagem para o discord"
-        if self.voice_client.is_playing():
+        if self.voice_client and self.voice_client.is_playing():
             self.send(
                 f"Música(s) Adicionada(s) à Fila -> Posição {self.music_manager.get_size() + 1}"
             )
-
-    def update_voice_channel(self):
-        "Evita Bugs de Troca de Canal"
-        asyncio.run_coroutine_threadsafe(
-            self.connect_if_not_connected(), self.voice_client.loop
-        )
 
     def queue(self) -> None:
         "Mostra a Fila do Bot"

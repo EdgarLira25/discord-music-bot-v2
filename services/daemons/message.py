@@ -1,3 +1,4 @@
+from asyncio import AbstractEventLoop, run_coroutine_threadsafe
 import threading
 import time
 from discord import Message
@@ -14,21 +15,23 @@ class MessageEventDaemon(threading.Thread):
         event_queue: QueueManager[Message],
         music_queue: QueueManager[MusicEvent],
         bot_provider: RagdeaBot,
+        event_loop: AbstractEventLoop,
     ) -> None:
         super().__init__()
         self.event_queue = event_queue
         self.music_queue = music_queue
         self.bot = bot_provider
+        self.event_loop = event_loop
         self.voice_channel = None
 
-    def _connect_if_not_connected(self):
+    def _reconnect(self, message: Message):
         try:
-            return asyncio.run(self.message.author.voice.channel.connect())  # type: ignore
+            return run_coroutine_threadsafe(message.author.voice.channel.connect(), self.loop).result(10)  # type: ignore
         except Exception:
             return None
 
-    def _sync_bot_variables(self, message):
-        voice_client = self._connect_if_not_connected()
+    def _sync_bot_variables(self, message: Message):
+        voice_client = self._reconnect(message)
         if (
             self.bot.message_channel != message.channel
             or self.bot.voice_client != voice_client
@@ -97,5 +100,6 @@ def create_messaging_daemon(
     event_manager: QueueManager[Message],
     music_manager: QueueManager[MusicEvent],
     bot_provider: RagdeaBot,
+    event_loop: AbstractEventLoop,
 ):
-    MessageEventDaemon(event_manager, music_manager, bot_provider).start()
+    MessageEventDaemon(event_manager, music_manager, bot_provider, event_loop).start()
