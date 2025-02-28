@@ -1,37 +1,19 @@
 from queue import Queue
-from typing import Any, Optional
-from discord import Client, Intents, Message, TextChannel
+from discord import Client, Intents, Message
 from application.bot import RagdeaBot
 from models.music import MusicEvent
 from services.daemons.message import create_messaging_daemon
 from services.daemons.music import create_musics_daemon
 from services.queue_manager import QueueManager
-from utils.formatters import normalize_text
+from utils import valid_message
 
 
 class Listener(Client):
 
-    def __init__(
-        self,
-        *,
-        intents: Intents,
-        **options: Any,
-    ) -> None:
-        super().__init__(intents=intents, **options)
+    def __init__(self, intents: Intents) -> None:
+        super().__init__(intents=intents)
 
     dict_queue: dict[int, Queue[Message]] = {}
-
-    def _get_guild_id_if_valid_command(self, message: Message) -> Optional[int]:
-
-        if (
-            message.guild
-            and not message.author.bot
-            and isinstance(message.channel, TextChannel)
-            and message.content.startswith("-")
-            and "music" in normalize_text(message.channel.name)
-        ):
-            return message.guild.id
-
 
     async def _init_bot_instance(self, guild_id: int, message: Message):
         music_queue = Queue[MusicEvent]()
@@ -51,11 +33,8 @@ class Listener(Client):
         )
         create_musics_daemon(music_queue_manager, bot)
 
-    async def on_message(self, message: Message):
-        guild_id = self._get_guild_id_if_valid_command(message)
-        if not guild_id or len(self.dict_queue) > 4:
-            return
-
+    @valid_message
+    async def on_message(self, message: Message, guild_id: int):
         if guild_id not in self.dict_queue:
             await self._init_bot_instance(guild_id, message)
 
