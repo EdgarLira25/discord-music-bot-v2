@@ -26,7 +26,7 @@ class MessageEventDaemon(threading.Thread):
 
     def _reconnect(self, message: Message):
         try:
-            return run_coroutine_threadsafe(message.author.voice.channel.connect(), self.loop).result(10)  # type: ignore
+            return run_coroutine_threadsafe(message.author.voice.channel.connect(), self.event_loop).result(10)  # type: ignore
         except Exception:
             return None
 
