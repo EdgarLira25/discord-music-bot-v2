@@ -34,7 +34,7 @@ class SongsCounter(metaclass=MetaClassSongsCounter):
         try:
             with open("contador.json", "r", encoding="utf-8") as songs:
                 return loads(songs.read())
-        except (JSONDecodeError, TypeError, ValueError) as e:
+        except (JSONDecodeError, TypeError, ValueError, FileNotFoundError) as e:
             print("Erro ao Carregar contador de músicas, usando um genérico", e)
             self.fail = True
             return {}
