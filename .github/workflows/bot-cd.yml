@@ -1,0 +1,26 @@
+name: bot-cd
+on:
+  push:
+    branches:
+      - main
+jobs:
+  bot-cd:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4 
+
+    - name: Set up SSH
+      uses: webfactory/ssh-agent@v0.9.0
+      with:
+        ssh-private-key: {{ secrets.VM_PEM }}
+
+    - name: Deploy to VM
+      run: |
+        ssh ${{ secrets.VM_USER }}@${{ secrets.VM_IP }} << 'EOF'
+           cd discord-music-bot-v2/
+           git pull origin main
+           docker compose stop
+           docker compose build .
+           docker compose up -d
+         EOF
