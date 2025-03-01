@@ -1,0 +1,9 @@
+services:
+  bot:
+    build: .
+    volumes:
+      - .:/tmp
+    env_file:
+      - .env
+    restart: unless-stopped
+
