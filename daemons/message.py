@@ -1,5 +1,6 @@
 """Módulo que consome os eventos da fila de message"""
 
+import os
 from asyncio import AbstractEventLoop, run_coroutine_threadsafe
 import threading
 import time
@@ -8,6 +9,9 @@ from application.bot import Bot
 from models.music import MusicEvent
 from services.queue_manager import QueueManager
 from services.youtube import Youtube
+
+
+TIME = 1 if "PYTEST_CURRENT_TEST" not in os.environ else 0
 
 
 class MessageEventDaemon(threading.Thread):
@@ -25,6 +29,7 @@ class MessageEventDaemon(threading.Thread):
         self.bot = bot_provider
         self.event_loop = event_loop
         self.voice_channel = None
+        self.is_running = True
 
     def _reconnect(self, message: Message):
         try:
@@ -41,7 +46,7 @@ class MessageEventDaemon(threading.Thread):
             self.bot.message_channel != message.channel
             or self.bot.voice_client != voice_client
         ):
-            self.bot.message_channel = message.channel
+            self.bot.message_channel = message.channel  # type: ignore
             if voice_client is not None:
                 self.bot.voice_client = voice_client
 
@@ -64,7 +69,7 @@ class MessageEventDaemon(threading.Thread):
         )
         self.music_queue.add_many(songs)
 
-    def process(self, command, content):
+    def process(self, command: str, content: list[str]):
         match command:
             case "-play":
                 self.bot.send_queue_message()
@@ -87,15 +92,19 @@ class MessageEventDaemon(threading.Thread):
             case _:
                 self.bot.send("Comando não encontrado. Use -help")
 
+    def _handle_event_variables(self) -> tuple[str, list[str]]:
+        """Realiza a leitura do evento e sincroniza as variaveis"""
+        event = self.event_queue.get()
+        content = event.content.split(" ", 1)
+        command = self._mapper_command(content[0])
+        self._sync_bot_variables(event)
+        return command, content
+
     def _loop(self):
-        while True:
+        while self.is_running:
             if self.event_queue.size() > 0:
-                event = self.event_queue.get()
-                content = event.content.split(" ", 1)
-                command = self._mapper_command(content[0])
-                self._sync_bot_variables(event)
-                self.process(command, content)
-            time.sleep(1)
+                self.process(*self._handle_event_variables())
+            time.sleep(TIME)
 
     def run(self):
         self._loop()
