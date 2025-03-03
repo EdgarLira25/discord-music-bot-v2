@@ -1,7 +1,6 @@
 """Módulo que consome os eventos da fila de message"""
 
 from logging import getLogger
-import os
 from asyncio import AbstractEventLoop, run_coroutine_threadsafe
 import threading
 import time
@@ -10,10 +9,9 @@ from application.bot import Bot
 from models.music import MusicEvent
 from services.queue_manager import QueueManager
 from services.youtube import Youtube
+from settings.consts import TIME
 
 logs = getLogger(__name__)
-
-TIME = 1 if os.environ.get("ENV", "PROD") != "TEST" else 0
 
 
 class MessageEventDaemon(threading.Thread):

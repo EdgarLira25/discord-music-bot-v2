@@ -1,14 +1,8 @@
-import os
 from sqlalchemy.sql.expression import Executable
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.engine import create_engine
 from database.models.base import Base
-
-DATABASE_URI = (
-    os.environ.get("DATABASE_URI", "sqlite:///music.db")
-    if os.environ.get("ENV", "PROD") != "TEST"
-    else "sqlite:///teste.db"
-)
+from settings.consts import DATABASE_URI
 
 engine = create_engine(url=DATABASE_URI, enable_from_linting=False)
 
