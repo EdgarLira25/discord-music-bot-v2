@@ -17,7 +17,7 @@ class Listener(Client):
 
     dict_queue: dict[int, Queue[Message]] = {}
 
-    async def _init_bot_instance(self, guild_id: int, message: Message):
+    def _init_bot_instance(self, guild_id: int, message: Message):
         """Inicializa instância do bot com todas suas dependências"""
         music_queue = Queue[MusicEvent]()
         music_queue_manager = QueueManager(music_queue)
@@ -40,6 +40,6 @@ class Listener(Client):
     async def on_message(self, message: Message, guild_id: int):
         "Receptor de todas mensagens do discord"
         if guild_id not in self.dict_queue:
-            await self._init_bot_instance(guild_id, message)
+            self._init_bot_instance(guild_id, message)
 
         QueueManager(self.dict_queue[guild_id]).add(message)
