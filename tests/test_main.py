@@ -4,7 +4,7 @@ from database.connector import Database
 from main import main
 
 
-def mock_run(token: str):
+def mock_run(token: str, **_):
     assert token
 
 

@@ -85,3 +85,9 @@ def test_create_instance(listener: Listener):
         args=(1, message),
         daemon=True,
     ).start()
+
+
+@pytest.mark.asyncio
+async def test_on_ready(listener):
+    "Apenas verifica se o fluxo não quebra"
+    await listener.on_ready()

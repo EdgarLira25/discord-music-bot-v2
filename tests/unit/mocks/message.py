@@ -8,6 +8,7 @@ from discord import ClientException, Message, TextChannel, VoiceClient
 @dataclass
 class GuildMock:
     id: int | None
+    name = "Teste"
 
 
 class ChannelMock:

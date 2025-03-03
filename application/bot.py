@@ -1,11 +1,15 @@
 import asyncio
+from logging import getLogger
 from threading import Lock
 from typing import Optional
+from colorama import Fore, Style
 from discord import FFmpegPCMAudio, TextChannel, VoiceClient
 from models.music import MusicEvent
 from services.songs_counter import SongsCounter
 from services.queue_manager import QueueManager
 from services.youtube import Youtube
+
+logs = getLogger(__name__)
 
 
 class SingletonBotMeta(type):
@@ -75,6 +79,7 @@ class Bot(metaclass=SingletonBotMeta):
 
     def send(self, string: str):
         "Envia mensagem para o discord"
+        logs.info("%s%s%s", Fore.MAGENTA, string, Style.RESET_ALL)
         asyncio.run_coroutine_threadsafe(
             self.message_channel.send(string), self.voice_client.loop
         )

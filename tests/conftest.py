@@ -6,6 +6,7 @@ from database.connector import Database
 
 
 patch("discord.FFmpegPCMAudio", new=MagicMock()).start()
+patch("logging.getLogger", new=MagicMock()).start()
 
 
 @pytest.fixture(scope="session", autouse=True)

@@ -1,5 +1,6 @@
 """Módulo que consome os eventos da fila de message"""
 
+from logging import getLogger
 import os
 from asyncio import AbstractEventLoop, run_coroutine_threadsafe
 import threading
@@ -10,6 +11,7 @@ from models.music import MusicEvent
 from services.queue_manager import QueueManager
 from services.youtube import Youtube
 
+logs = getLogger(__name__)
 
 TIME = 1 if os.environ.get("ENV", "PROD") != "TEST" else 0
 
@@ -46,6 +48,7 @@ class MessageEventDaemon(threading.Thread):
             self.bot.message_channel != message.channel
             or self.bot.voice_client != voice_client
         ):
+            logs.info("Sincronizando canais")
             self.bot.message_channel = message.channel  # type: ignore
             if voice_client is not None:
                 self.bot.voice_client = voice_client
@@ -98,11 +101,13 @@ class MessageEventDaemon(threading.Thread):
         content = event.content.split(" ", 1)
         command = self._mapper_command(content[0])
         self._sync_bot_variables(event)
+        logs.info("Enviando evento para processamento...")
         return command, content
 
     def _loop(self):
         while self.is_running:
             if self.event_queue.size() > 0:
+                logs.info("Evento encontrado, tratando...")
                 self.process(*self._handle_event_variables())
             time.sleep(TIME)
 
