@@ -1,11 +1,14 @@
 "Módulo do daemon que consome a fila de músicas do bot"
 
+from logging import getLogger
 import os
 import threading
 import time
 from application.bot import Bot
 from models.music import MusicEvent
 from services.queue_manager import QueueManager
+
+logs = getLogger(__name__)
 
 TIME = 1 if os.environ.get("ENV", "PROD") != "TEST" else 0
 
@@ -34,6 +37,7 @@ class MusicsEventDaemon(threading.Thread):
     def _loop(self):
         while self.is_running:
             if self._valid_state_to_process():
+                logs.info("Música em estado válido para ser tocada")
                 self.process()
             time.sleep(TIME)
 

@@ -33,7 +33,9 @@ def test_get_audio_url_fail(mock_extract_info):
 def test_search_single_song(mock_extract_info):
     """Testa a busca de uma única música"""
     mock_extract_info.return_value = {
-        "entries": [{"url": "https://song.url", "title": "Test Song"}]
+        "entries": [
+            {"url": "https://song.url", "title": "Test Song", "original_url": ""}
+        ]
     }
     url = "test song finded"
     result = Youtube().search_single_song(url)

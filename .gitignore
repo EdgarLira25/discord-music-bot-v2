@@ -6,6 +6,9 @@ venv
 .tox
 .coverage
 
+#logs
+spam.log
+
 # sqlite usado em PROD, caso não tenha especificado nenhum
 music.db
 
