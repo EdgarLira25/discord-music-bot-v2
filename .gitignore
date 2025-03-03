@@ -6,6 +6,13 @@ venv
 .tox
 .coverage
 
+# sqlite usado em PROD, caso não tenha especificado nenhum
+music.db
+
+# sqlite usado nos testes
+teste.db
+
+
 # Pasta com Coverage do Código
 htmlcov
 # Executar Github Actions Localmente

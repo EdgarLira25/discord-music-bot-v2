@@ -1,55 +1,34 @@
-"""Módulo de gerenciamento para contagem músicas tocadas"""
+"""Módulo de gerenciamento para contagem de músicas tocadas"""
 
-from json import JSONDecodeError, loads, dumps
-from threading import Lock
-from typing import Optional
-
-
-class MetaClassSongsCounter(type):
-    """Metaclasse para singleton seguro entre threads"""
-
-    _instances = {}
-    _lock: Lock = Lock()
-
-    def __call__(cls, *args, **kwargs):
-        with cls._lock:
-            if cls not in cls._instances:
-                instance = super().__call__(*args, **kwargs)
-                cls._instances[cls] = instance
-        return cls._instances[cls]
+from sqlalchemy import insert, select, update
+from database.connector import Database
+from database.models.songs import SongsDao
 
 
-class SongsCounter(metaclass=MetaClassSongsCounter):
-    _instance: Optional["SongsCounter"] = None
+class SongsCounter:
+    """OBS: Se esta classe escalar muito, é justo fazer um repository"""
 
-    def __init__(self, json_path="contador.json") -> None:
+    songs = SongsDao
 
-        self.json_path = json_path
-        self._dict_count: dict[str, int] = self._load()
-        self._load()
-        self.fail = False
+    def __init__(self, database_provider=Database()) -> None:
+        self.db = database_provider
 
-    def _save(self):
-        if not self.fail:
-            with open(self.json_path, "w", encoding="utf-8") as songs:
-                songs.write(dumps(self._dict_count))
-
-    def _load(self) -> dict[str, int]:
-        try:
-            with open(self.json_path, "r", encoding="utf-8") as songs:
-                return loads(songs.read())
-        except (JSONDecodeError, TypeError, ValueError, FileNotFoundError) as e:
-            print("Erro ao Carregar contador de músicas, usando um genérico", e)
-            self.fail = True
-            return {}
-
-    def add(self, name: str):
-        if name in self._dict_count:
-            self._dict_count[name] += 1
+    def add(self, name: str) -> None:
+        song = self.db.query_one_row(
+            select(self.songs.name).where(self.songs.name == name)
+        )
+        if not song:
+            self.db.statement(insert(self.songs).values(name=name, count=1))
         else:
-            self._dict_count[name] = 1
-
-        self._save()
+            self.db.statement(
+                update(self.songs)
+                .where(self.songs.name == name)
+                .values(count=self.songs.count + 1)
+            )
 
     def get(self, name: str) -> int:
-        return self._dict_count.get(name, 0)
+        query = self.db.query_one_row(
+            select(self.songs.count).where(self.songs.name == name)
+        )
+
+        return query["count"] if query else 0

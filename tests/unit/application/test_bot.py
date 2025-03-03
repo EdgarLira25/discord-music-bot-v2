@@ -58,7 +58,7 @@ def bot_fixture():
     )
 
 
-def mock_counter_add(*_):
+def mock_counter_add_get(*_):
     return None
 
 
@@ -66,14 +66,16 @@ def mock_youtube_get_audio(*_):
     return "my string"
 
 
-@patch.object(SongsCounter, "add", mock_counter_add)
+@patch.object(SongsCounter, "get", mock_counter_add_get)
+@patch.object(SongsCounter, "add", mock_counter_add_get)
 def test_play_command_audio(bot: Bot, music_event_audio: MusicEvent):
     bot.message_channel.send = AsyncMock()
     bot.play(music_event_audio)
     bot.message_channel.send.assert_called_once()
 
 
-@patch.object(SongsCounter, "add", mock_counter_add)
+@patch.object(SongsCounter, "get", mock_counter_add_get)
+@patch.object(SongsCounter, "add", mock_counter_add_get)
 @patch.object(Youtube, "get_audio_url", mock_youtube_get_audio)
 def test_play_command_video(bot: Bot, music_event_video: MusicEvent):
     bot.message_channel.send = AsyncMock()
