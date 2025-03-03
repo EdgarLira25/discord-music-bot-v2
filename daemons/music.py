@@ -7,7 +7,7 @@ from application.bot import Bot
 from models.music import MusicEvent
 from services.queue_manager import QueueManager
 
-TIME = 1 if "PYTEST_CURRENT_TEST" not in os.environ else 0
+TIME = 1 if os.environ.get("ENV", "PROD") != "TEST" else 0
 
 
 class MusicsEventDaemon(threading.Thread):

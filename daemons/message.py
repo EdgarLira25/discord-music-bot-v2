@@ -11,7 +11,7 @@ from services.queue_manager import QueueManager
 from services.youtube import Youtube
 
 
-TIME = 1 if "PYTEST_CURRENT_TEST" not in os.environ else 0
+TIME = 1 if os.environ.get("ENV", "PROD") != "TEST" else 0
 
 
 class MessageEventDaemon(threading.Thread):
