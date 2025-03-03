@@ -10,7 +10,12 @@ class Youtube:
     def get_audio_url(url: str) -> str:
         """Busca url do áudio de um video"""
         with YoutubeDL(
-            {"format": "bestaudio", "noplaylist": "True", "cookiefile": "cookies.txt"}
+            {
+                "quiet": True,
+                "format": "bestaudio",
+                "noplaylist": "True",
+                "cookiefile": "cookies.txt",
+            }
         ) as ydl:
             if info := ydl.extract_info(url, download=False):
                 return info["url"]
@@ -19,7 +24,12 @@ class Youtube:
     def search_single_song(self, url: str) -> List[MusicEvent]:
         """Busca uma música"""
         with YoutubeDL(
-            {"format": "bestaudio", "noplaylist": "True", "cookiefile": "cookies.txt"}
+            {
+                "quiet": True,
+                "format": "bestaudio",
+                "noplaylist": "True",
+                "cookiefile": "cookies.txt",
+            }
         ) as ydl:
             if info := ydl.extract_info(f"ytsearch: {url}", download=False):
                 generated_info = info["entries"][0]
