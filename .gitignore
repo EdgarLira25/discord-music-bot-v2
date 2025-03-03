@@ -6,6 +6,8 @@ venv
 .tox
 .coverage
 
+# Pasta com Coverage do Código
+htmlcov
 # Executar Github Actions Localmente
 .secrets
 # Cookies do yt-dlp -- uteis para deploys em Clouds
