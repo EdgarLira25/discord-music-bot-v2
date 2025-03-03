@@ -1,33 +1,64 @@
-# discord-music-bot-v2
+# Discord Bot
 
-Bot de música para o discord desenvolvido para uso pessoal
+Desenvolvi este projeto para estudos e neste ano de 2025 resolvi organizar todo o código e sua estrutura, espero que seja útil de alguma maneira.
 
-### Dependencias: 
-    
-- python 3.10>
+Este projeto é um bot de música para Discord, desenvolvido em Python, que pode ser instalado e executado de duas formas: via `docker-compose` ou manualmente com um ambiente virtual.
 
-- token de bot discord
+## 📦 Instalação
 
-###  Passo a Passo:
+### 1️⃣ Usando Docker Compose
+Para facilitar, você pode utilizar o Docker Compose (certifique-se que você possui o TOKEN da sua aplicação no arquivo .env):
 
-Criando venv
-        
-        python -m venv venv
+```sh
+git clone https://github.com/EdgarLira25/discord-music-bot-v2.git 
+cd discord-music-bot-v2
+docker compose up -d --build
+```
+
+### 2️⃣Execução Manual (Python + venv)
+Caso prefira rodar localmente sem Docker:
+
+```sh
+git clone https://github.com/EdgarLira25/discord-music-bot-v2.git 
+cd discord-music-bot-v2
+python3 -m venv venv
+source venv/bin/activate  # No Windows, use `venv\Scripts\activate`
+pip install -r requirements.txt
+python main.py
+```
+
+## 🚀 Variável de Ambiente
+
+Certifique-se de definir a variável de ambiente `TOKEN` do seu bot do Discord em seu arquivo .env (não validei se roda em windows):
+
+```sh
+export TOKEN="seu_token_aqui"  # Linux/macOS
+set TOKEN=seu_token_aqui        # Windows (cmd)
+```
+
+## ☁️ Deploy em Nuvem
+
+Se for rodar em um servidor na nuvem (Azure, AWS ou Google, você precisará extrair sua sessão do YouTube de algum navegador. Pois você receberá um 403 do youtube via API.
+
+Você pode utilizar ferramentas como:
+- **Cookies.txt Chrome/Firefox Extension**
+
+Link com recomendações do yt-dlp -> https://github.com/yt-dlp/yt-dlp/wiki/FAQ
+Cuidado ao utilizar ferramentas para extrair a sessão do youtube!
 
 
-Ativando venv
+Após a extração, armaneze em um arquivo chamado cookies.txt no root do projeto.
 
-        source .venv/bin/activate
+## 🔍 Qualidade e Ensurance
 
-Instalando dependencias do python        
-        
-        pip install -r requirements.txt
+Para garantir a qualidade do código, utilizei as seguintes ferramentas no CI:
 
-Tenha um .env 
+✅ **Pylint** - Análise estática do código.
 
-    TOKEN=<seu_token>
-    AUTHORIZED=<nome1>|<nome2>|...
+✅ **Black** - Formatação automática.
 
-Após configurado:
-        
-        python bot.py
+✅ **Pytest** - Testes automatizados. (100% de coverage em testes unitários)
+
+---
+
+📌 *Caso tenha dúvidas, sinta-se a vontade para abrir uma issue no repositório!*
