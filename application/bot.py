@@ -1,7 +1,7 @@
 import asyncio
 from threading import Lock
 from typing import Optional
-from discord import FFmpegPCMAudio, VoiceClient
+from discord import FFmpegPCMAudio, TextChannel, VoiceClient
 from models.music import MusicEvent
 from services.songs_counter import SongsCounter
 from services.queue_manager import QueueManager
@@ -35,7 +35,7 @@ class Bot(metaclass=SingletonBotMeta):
     ) -> None:
         self.guild_id = guild_id
         self.voice_channel = voice_channel
-        self.message_channel = message_channel
+        self.message_channel: TextChannel = message_channel
         self.voice_client: VoiceClient = voice_client
         self.music_manager: QueueManager[MusicEvent] = music_manager_provider
         self.counter = SongsCounter()
