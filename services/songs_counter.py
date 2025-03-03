@@ -2,6 +2,7 @@
 
 from json import JSONDecodeError, loads, dumps
 from threading import Lock
+from typing import Optional
 
 
 class MetaClassSongsCounter(type):
@@ -19,20 +20,23 @@ class MetaClassSongsCounter(type):
 
 
 class SongsCounter(metaclass=MetaClassSongsCounter):
+    _instance: Optional["SongsCounter"] = None
 
-    def __init__(self) -> None:
+    def __init__(self, json_path="contador.json") -> None:
+
+        self.json_path = json_path
         self._dict_count: dict[str, int] = self._load()
         self._load()
         self.fail = False
 
     def _save(self):
         if not self.fail:
-            with open("contador.json", "w", encoding="utf-8") as songs:
+            with open(self.json_path, "w", encoding="utf-8") as songs:
                 songs.write(dumps(self._dict_count))
 
     def _load(self) -> dict[str, int]:
         try:
-            with open("contador.json", "r", encoding="utf-8") as songs:
+            with open(self.json_path, "r", encoding="utf-8") as songs:
                 return loads(songs.read())
         except (JSONDecodeError, TypeError, ValueError, FileNotFoundError) as e:
             print("Erro ao Carregar contador de músicas, usando um genérico", e)
