@@ -80,7 +80,7 @@ def test_add_music_with_link(
             source="https://sertanejo", title="Time in a bottle", type_url="audio"
         )
     ]
-    message_daemon.add_music("https://EdgarLira25.com")
+    message_daemon.add_music("https://www.youtube.com/musicashow")
     mock_search_by_link.assert_called_once()
     assert message_daemon.music_queue.size() > 0
 

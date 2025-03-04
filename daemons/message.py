@@ -8,6 +8,7 @@ from discord import ClientException, Message
 from application.bot import Bot
 from models.music import MusicEvent
 from services.queue_manager import QueueManager
+from services.spotify import Spotify
 from services.youtube import Youtube
 from settings.consts import TIME
 
@@ -62,12 +63,16 @@ class MessageEventDaemon(threading.Thread):
         }.get(key, key)
 
     def add_music(self, search: str):
-        ytb = Youtube()
-        songs = (
-            ytb.search_single_song(search)
-            if "https://" not in search
-            else ytb.search_by_link(search)
-        )
+        songs = []
+        if "https://" not in search:
+            songs = Youtube().search_single_song(search)
+        elif "https://www.youtube.com" in search:
+            songs = Youtube().search_by_link(search)
+        elif "https://open.spotify.com/playlist/" in search:
+            songs = Spotify().get_playlist(search.split("/")[-1])
+        elif "https://open.spotify.com/track/" in search:
+            songs = Spotify().get_music(search.split("/")[-1])
+
         self.music_queue.add_many(songs)
 
     def process(self, command: str, content: list[str]):

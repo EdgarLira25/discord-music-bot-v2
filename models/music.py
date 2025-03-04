@@ -6,4 +6,4 @@ from typing import Literal
 class MusicEvent:
     source: str
     title: str
-    type_url: Literal["audio", "video"]
+    type_url: Literal["audio", "video", "spotify"]
