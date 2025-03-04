@@ -46,11 +46,15 @@ class Bot(metaclass=SingletonBotMeta):
 
     def play(self, event: MusicEvent):
 
-        url = (
-            event.source
-            if event.type_url == "audio"
-            else Youtube.get_audio_url(event.source)
-        )
+        match event.type_url:
+            case "audio":
+                url = event.source
+            case "video":
+                url = Youtube.get_audio_url(event.source)
+            case "spotify":
+                event = Youtube().search_single_song(event.title)[0]
+                url = event.source
+
         self.counter.add(event.title)
         self.voice_client.play(
             FFmpegPCMAudio(
