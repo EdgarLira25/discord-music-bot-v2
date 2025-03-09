@@ -66,12 +66,13 @@ class MessageEventDaemon(threading.Thread):
         songs = []
         if "https://" not in search:
             songs = Youtube().search_single_song(search)
-        elif "https://www.youtube.com" in search:
+        elif "youtube.com" in search:
             songs = Youtube().search_by_link(search)
-        elif "https://open.spotify.com/playlist/" in search:
-            songs = Spotify().get_playlist(search.split("/")[-1])
-        elif "https://open.spotify.com/track/" in search:
-            songs = Spotify().get_music(search.split("/")[-1])
+        elif "open.spotify.com" in search:
+            songs = Spotify().search_by_link(search)
+
+        if not songs:
+            logs.warning("Nenhuma música valida foi encontrada")
 
         self.music_queue.add_many(songs)
 
