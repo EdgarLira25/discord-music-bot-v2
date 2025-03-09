@@ -52,8 +52,11 @@ class Bot(metaclass=SingletonBotMeta):
             case "video":
                 url = Youtube.get_audio_url(event.source)
             case "spotify":
-                event = Youtube().search_single_song(event.title)[0]
-                url = event.source
+                if events := Youtube().search_single_song(event.title):
+                    event = events[0]
+                    url = event.source
+                else:
+                    return
 
         self.counter.add(event.title)
         self.voice_client.play(

@@ -22,7 +22,40 @@ class Spotify:
         ).json()["access_token"]
         return self._token
 
-    def get_playlist(self, playlist_id: str) -> list[MusicEvent]:
+    def search_by_link(self, search: str) -> list[MusicEvent]:
+        element_id = search.split("/")[-1]
+        if "album/" in search:
+            return self._get_album(album_id=element_id)
+        if "playlist/" in search:
+            return self._get_playlist(playlist_id=element_id)
+        if "track/" in search:
+            return self._get_music(music_id=element_id)
+        return []
+
+    def _get_album(self, album_id: str) -> list[MusicEvent]:
+        response = requests.request(
+            method="GET",
+            url=f"{self.base_url}/albums/{album_id}",
+            headers={"Authorization": f"Bearer {self.token}"},
+            timeout=10,
+        )
+
+        if not response.ok:
+            logs.warning(
+                "Erro ao encontrar a album do spotify (verifique se o album é público)"
+            )
+            return []
+
+        return [
+            MusicEvent(
+                source=music["external_urls"]["spotify"],
+                title=f"{music['artists'][0]['name']} {music['name']}",
+                type_url="spotify",
+            )
+            for music in response.json()["tracks"]["items"]
+        ]
+
+    def _get_playlist(self, playlist_id: str) -> list[MusicEvent]:
         response = requests.request(
             method="GET",
             url=f"{self.base_url}/playlists/{playlist_id}",
@@ -34,10 +67,7 @@ class Spotify:
             logs.warning(
                 "Erro ao encontrar a playlist do spotify (verifique se a playlist é pública)"
             )
-            print(response.status_code)
             return []
-
-        playlist = response.json()["tracks"]["items"]
 
         return [
             MusicEvent(
@@ -45,10 +75,10 @@ class Spotify:
                 title=f"{music['track']['artists'][0]['name']} {music['track']['name']}",
                 type_url="spotify",
             )
-            for music in playlist
+            for music in response.json()["tracks"]["items"]
         ]
 
-    def get_music(self, music_id: str) -> list[MusicEvent]:
+    def _get_music(self, music_id: str) -> list[MusicEvent]:
         url = f"{self.base_url}/tracks/{music_id}"
         response = requests.request(
             method="GET",
