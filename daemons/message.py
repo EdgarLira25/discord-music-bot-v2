@@ -93,6 +93,10 @@ class MessageEventDaemon(threading.Thread):
                 self.bot.kill()
             case "-queue":
                 self.bot.queue()
+            case "-switch-link":
+                self.bot.send("http://127.0.0.1:8080/")
+            case "-switch":
+                pass
             case "-help":
                 self.bot.help()
             case _:

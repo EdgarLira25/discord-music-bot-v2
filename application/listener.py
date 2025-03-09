@@ -4,7 +4,8 @@ from logging import getLogger
 from queue import Queue
 from discord import Client, Intents, Message
 from application.bot import Bot
-from models.music import MusicEvent
+from daemons.spotify_listener import create_spotify_daemon
+from models.music import InstanceParams, MusicEvent
 from daemons.message import create_messaging_daemon
 from daemons.music import create_musics_daemon
 from services.queue_manager import QueueManager
@@ -18,7 +19,7 @@ class Listener(Client):
     def __init__(self, intents: Intents) -> None:
         super().__init__(intents=intents)
 
-    dict_queue: dict[int, Queue[Message]] = {}
+    dict_queue: dict[int, InstanceParams] = {}
 
     def _init_bot_instance(self, guild_id: int, message: Message):
         """Inicializa instância do bot com todas suas dependências"""
@@ -27,7 +28,9 @@ class Listener(Client):
         music_queue_manager = QueueManager(music_queue)
         event_queue = Queue[Message]()
         event_queue_manager = QueueManager(event_queue)
-        self.dict_queue[guild_id] = event_queue
+        self.dict_queue[guild_id] = InstanceParams(
+            music_queue=music_queue, event_queue=event_queue, mode="discord"
+        )
         bot = Bot(
             guild_id,
             message.author.voice.channel,  # type: ignore
@@ -52,4 +55,17 @@ class Listener(Client):
         if message.guild:
             logs.info("Adicionando Evento à: %s", message.guild.name)
 
-        QueueManager(self.dict_queue[guild_id]).add(message)
+        if "-switch" in message.content:
+            if self.dict_queue[guild_id]["mode"] == "spotify":
+                self.dict_queue[guild_id]["mode"] = "discord"
+            else:
+                code = message.content.split(" ")[-1]
+                self.dict_queue[guild_id]["mode"] = "spotify"
+                bot = Bot(guild_id, None, None, None, None)
+                QueueManager(self.dict_queue[guild_id]["event_queue"]).add(message)
+                create_spotify_daemon(
+                    QueueManager(self.dict_queue[guild_id]["music_queue"]), bot, code
+                )
+
+        if self.dict_queue[guild_id]["mode"] == "discord":
+            QueueManager(self.dict_queue[guild_id]["event_queue"]).add(message)
