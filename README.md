@@ -36,6 +36,21 @@ export TOKEN="seu_token_aqui"  # Linux/macOS
 set TOKEN=seu_token_aqui        # Windows (cmd)
 ```
 
+#### Variáveis Opcionais
+
+Essas variaveis de ambiente são para se integrar com um Database para contagem de músicas
+
+```sh
+export DATABASE_URI
+```
+
+Credenciais de integração com o Spotify
+
+```sh
+export SPOTIFY_CLIENT_ID
+export SPOTIFY_CLIENT_SECRET
+```
+
 ## ☁️ Deploy em Nuvem
 
 Se for rodar em um servidor na nuvem (Azure, AWS ou Google, você precisará extrair sua sessão do YouTube de algum navegador. Pois você receberá um 403 do youtube via API.
