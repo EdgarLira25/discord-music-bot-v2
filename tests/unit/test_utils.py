@@ -1,6 +1,12 @@
 from unittest.mock import AsyncMock
 import pytest
-from tests.unit.mocks.message import AuthorMock, GuildMock, MessageMock, TextChannelMock
+from tests.unit.mocks.message import (
+    AuthorMock,
+    GuildMock,
+    MessageMock,
+    TextChannelMock,
+    VoiceMock,
+)
 from utils import valid_message
 
 
@@ -12,7 +18,10 @@ def func_mock_fixture():
 @pytest.mark.asyncio
 async def test_valid_message_success(async_func_mock):
     message = MessageMock(
-        GuildMock(1), AuthorMock(False), TextChannelMock("music"), "-p abcde"
+        GuildMock(1),
+        AuthorMock(False, VoiceMock()),
+        TextChannelMock("music"),
+        "-p abcde",
     )
     decorated_func = valid_message(async_func_mock)
     response = await decorated_func(None, message=message)
@@ -72,7 +81,10 @@ async def test_valid_message_invalid_channel_name(async_func_mock):
 async def test_valid_message_valid_channel_name(channel_name, async_func_mock):
     """Testa mensagem válida com varios nomes de canal _music_"""
     message = MessageMock(
-        GuildMock(1), AuthorMock(False), TextChannelMock(channel_name), "-p abcde"
+        GuildMock(1),
+        AuthorMock(False, VoiceMock()),
+        TextChannelMock(channel_name),
+        "-p abcde",
     )
     decorated_func = valid_message(async_func_mock)
     response = await decorated_func(None, message=message)

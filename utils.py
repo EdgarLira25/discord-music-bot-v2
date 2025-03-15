@@ -14,6 +14,7 @@ def valid_message(func: Callable):
         if (
             message.guild
             and not message.author.bot
+            and message.author.voice  # type: ignore
             and isinstance(message.channel, TextChannel)
             and message.content.startswith("-")
             and (
