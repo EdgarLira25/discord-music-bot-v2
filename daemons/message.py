@@ -79,6 +79,9 @@ class MessageEventDaemon(threading.Thread):
     def process(self, command: str, content: list[str]):
         match command:
             case "-play":
+                if len(content) < 2:
+                    logs.warning("Nenhuma música enviada")
+                    return
                 self.bot.send_queue_message()
                 threading.Thread(
                     target=self.add_music,
