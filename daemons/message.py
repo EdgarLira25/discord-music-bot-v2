@@ -117,6 +117,10 @@ class MessageEventDaemon(threading.Thread):
                 logs.info("Evento encontrado, tratando...")
                 self.process(*self._handle_event_variables())
             time.sleep(TIME)
+        self.process("-kill", [])
+
+    def stop(self):
+        self.is_running = False
 
     def run(self):
         self._loop()
@@ -128,4 +132,6 @@ def create_messaging_daemon(
     bot_provider: Bot,
     event_loop: AbstractEventLoop,
 ):
-    MessageEventDaemon(event_manager, music_manager, bot_provider, event_loop).start()
+    thread = MessageEventDaemon(event_manager, music_manager, bot_provider, event_loop)
+    thread.start()
+    return thread

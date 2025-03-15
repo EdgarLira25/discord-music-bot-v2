@@ -1,10 +1,12 @@
 import asyncio
 from queue import Queue
-import threading
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 from discord import Intents, Message
 import pytest
 from application.listener import Listener
+from models.bot import BotServices, Bots
+from services.instance_manager import InstanceManager
+from services.queue_manager import QueueManager
 from tests.unit.mocks.message import (
     AuthorMock,
     GuildMock,
@@ -16,7 +18,7 @@ from tests.unit.mocks.message import (
 
 @pytest.fixture(name="listener")
 def listener_fixture():
-    return Listener(intents=Intents.all())
+    return Listener(intents=Intents.all(), bots=Bots())
 
 
 @pytest.fixture(scope="function", autouse=True)
@@ -26,65 +28,70 @@ def auto_close_event_loop():
     loop.call_soon_threadsafe(loop.stop)
 
 
-def mock_init_bot_instance(cls: Listener, guild_id, _):
-    cls.dict_queue[guild_id] = Queue[Message]()
+def mock_init_bot_services(*_):
+    return BotServices(
+        bot_instance=MagicMock(),
+        music_event_queue=MagicMock(),
+        message_event_queue=QueueManager(Queue[Message]()),
+        message_daemon=MagicMock(),
+        music_daemon=MagicMock(),
+    )
 
 
 @pytest.mark.asyncio
-@patch.object(Listener, "_init_bot_instance", mock_init_bot_instance)
+@patch.object(InstanceManager, "init_bot_services", mock_init_bot_services)
 async def test_on_message_with_pre_none_guild_id(listener: Listener):
     message = MessageMock(
-        GuildMock(1), AuthorMock(False), TextChannelMock("music"), "-p abcde"
-    )
-    await listener.on_message(message=message)  # type: ignore
-    assert len(listener.dict_queue) == 1
-    assert listener.dict_queue.get(1)
-
-
-@pytest.mark.asyncio
-@patch.object(Listener, "_init_bot_instance", mock_init_bot_instance)
-async def test_on_message_with_pre_exist_guild_id(listener: Listener):
-    message = MessageMock(
-        GuildMock(1), AuthorMock(False), TextChannelMock("music"), "-p abcde"
-    )
-    await listener.on_message(message=message)  # type: ignore
-    message = MessageMock(
-        GuildMock(1), AuthorMock(False), TextChannelMock("music"), "-p abcde"
-    )
-    assert len(listener.dict_queue) == 1
-    assert listener.dict_queue.get(1)
-
-
-@pytest.mark.asyncio
-@patch.object(Listener, "_init_bot_instance", mock_init_bot_instance)
-async def test_on_message_with_pre_diff_guild_id(listener: Listener):
-    message = MessageMock(
-        GuildMock(1), AuthorMock(False), TextChannelMock("music"), "-p abcde"
-    )
-    await listener.on_message(message=message)  # type: ignore
-    message = MessageMock(
-        GuildMock(2), AuthorMock(False), TextChannelMock("music"), "-p abcde"
-    )
-    await listener.on_message(message=message)  # type: ignore
-    assert len(listener.dict_queue) == 2
-    assert listener.dict_queue.get(1)
-    assert listener.dict_queue.get(2)
-
-
-def test_create_instance(listener: Listener):
-    guild_id = 1
-    message = MessageMock(
-        GuildMock(guild_id),
-        AuthorMock(False, voice=VoiceMock()),
+        GuildMock(1),
+        AuthorMock(False, VoiceMock(False)),
         TextChannelMock("music"),
         "-p abcde",
     )
+    await listener.on_message(message=message)  # type: ignore
+    assert len(listener.bots) == 1
+    assert listener.bots.get(1)
 
-    threading.Thread(
-        target=listener._init_bot_instance,  # pylint: disable=protected-access
-        args=(1, message),
-        daemon=True,
-    ).start()
+
+@pytest.mark.asyncio
+@patch.object(InstanceManager, "init_bot_services", mock_init_bot_services)
+async def test_on_message_with_pre_exist_guild_id(listener: Listener):
+    message = MessageMock(
+        GuildMock(1),
+        AuthorMock(False, VoiceMock(False)),
+        TextChannelMock("music"),
+        "-p abcde",
+    )
+    await listener.on_message(message=message)  # type: ignore
+    message = MessageMock(
+        GuildMock(1),
+        AuthorMock(False, VoiceMock(False)),
+        TextChannelMock("music"),
+        "-p abcde",
+    )
+    assert len(listener.bots) == 1
+    assert listener.bots.get(1)
+
+
+@pytest.mark.asyncio
+@patch.object(InstanceManager, "init_bot_services", mock_init_bot_services)
+async def test_on_message_with_pre_diff_guild_id(listener: Listener):
+    message = MessageMock(
+        GuildMock(1),
+        AuthorMock(False, VoiceMock(False)),
+        TextChannelMock("music"),
+        "-p abcde",
+    )
+    await listener.on_message(message=message)  # type: ignore
+    message = MessageMock(
+        GuildMock(2),
+        AuthorMock(False, VoiceMock(False)),
+        TextChannelMock("music"),
+        "-p abcde",
+    )
+    await listener.on_message(message=message)  # type: ignore
+    assert len(listener.bots) == 2
+    assert listener.bots.get(1)
+    assert listener.bots.get(2)
 
 
 @pytest.mark.asyncio

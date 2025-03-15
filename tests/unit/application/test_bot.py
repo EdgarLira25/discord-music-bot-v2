@@ -51,7 +51,6 @@ def bot_fixture():
     threading.Thread(target=start_loop, args=(event_loop,), daemon=True).start()
     return Bot(
         1,
-        "",
         TextChannelMock(False),
         VoiceClientMock(False, loop=event_loop),
         music_manager,
