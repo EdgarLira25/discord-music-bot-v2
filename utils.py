@@ -5,6 +5,8 @@ from typing import Callable
 import unicodedata
 from discord import Message, TextChannel
 
+# pylint: disable=too-many-boolean-expressions
+
 
 def valid_message(func: Callable):
     "Decorator para validar toda mensagem de entrada no listener"
@@ -26,6 +28,8 @@ def valid_message(func: Callable):
                 ).lower()
             )
         ):
-            return await func(self, message, message.guild.id, *args, **kwargs)
+            return await func(
+                self, message, message.guild.id, message.guild.name, *args, **kwargs
+            )
 
     return wrapper

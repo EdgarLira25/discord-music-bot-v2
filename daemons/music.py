@@ -11,7 +11,7 @@ from settings.consts import TIME
 logs = getLogger(__name__)
 
 
-class MusicsEventDaemon(threading.Thread):
+class MusicEventDaemon(threading.Thread):
 
     def __init__(
         self, queue_manager_provider: QueueManager[MusicEvent], bot_provider: Bot
@@ -39,11 +39,16 @@ class MusicsEventDaemon(threading.Thread):
                 self.process()
             time.sleep(TIME)
 
+    def stop(self):
+        self.is_running = False
+
     def run(self):
         self._loop()
 
 
-def create_musics_daemon(
+def create_music_daemon(
     music_queue_manager_provider: QueueManager[MusicEvent], bot_provider: Bot
 ):
-    MusicsEventDaemon(music_queue_manager_provider, bot_provider).start()
+    thread = MusicEventDaemon(music_queue_manager_provider, bot_provider)
+    thread.start()
+    return thread

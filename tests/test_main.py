@@ -12,6 +12,7 @@ def mock_migrate():
     pass
 
 
+@patch("main.create_monitor_daemon", MagicMock())
 @patch.dict("os.environ", {"TOKEN": "fake_token"})
 @patch.object(Database, "migrate_all")
 @patch.object(Listener, "run")

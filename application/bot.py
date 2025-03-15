@@ -13,7 +13,7 @@ logs = getLogger(__name__)
 
 
 class SingletonBotMeta(type):
-    "Metaclasse para singleton seguro entre threads baseado em chave guild_id"
+    "Metaclasse para singleton seguro entre threads baseado em chave instance_id"
 
     _instances = {}
     _lock: Lock = Lock()
@@ -31,14 +31,12 @@ class Bot(metaclass=SingletonBotMeta):
 
     def __init__(
         self,
-        guild_id: int,
-        voice_channel,
+        instance_id: int,
         message_channel,
         voice_client,
-        music_manager_provider,
+        music_manager_provider: QueueManager[MusicEvent],
     ) -> None:
-        self.guild_id = guild_id
-        self.voice_channel = voice_channel
+        self.instance_id: int = instance_id
         self.message_channel: TextChannel = message_channel
         self.voice_client: VoiceClient = voice_client
         self.music_manager: QueueManager[MusicEvent] = music_manager_provider
