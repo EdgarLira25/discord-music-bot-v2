@@ -1,4 +1,5 @@
 from asyncio import AbstractEventLoop
+from datetime import datetime
 from logging import getLogger
 from queue import Queue
 from discord import Message
@@ -39,4 +40,5 @@ class InstanceManager:
         if bot_id not in self.bots:
             self.bots[bot_id] = self.init_bot_services(bot_id, message, event_loop)
 
+        self.bots[bot_id].last_activity = datetime.now()
         self.bots[bot_id].message_event_queue.add(message)
