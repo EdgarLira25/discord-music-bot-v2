@@ -17,7 +17,7 @@ class Youtube:
         with YoutubeDL(
             {
                 "quiet": True,
-                "format": "bestaudio",
+                "format": "m4a",
                 "noplaylist": "True",
                 "cookiefile": "cookies.txt",
             }
@@ -35,7 +35,7 @@ class Youtube:
         with YoutubeDL(
             {
                 "quiet": True,
-                "format": "bestaudio",
+                "format": "m4a",
                 "noplaylist": "True",
                 "cookiefile": "cookies.txt",
             }
@@ -66,7 +66,7 @@ class Youtube:
         with YoutubeDL(
             {
                 "quiet": True,
-                "format": "m4a/bestaudio/best",
+                "format": "m4a",
                 "extract_flat": True,
                 "skip_download": True,
                 "cookiefile": "cookies.txt",
