@@ -22,6 +22,7 @@ class MonitorDaemon(threading.Thread):
             logs.info("Matando instância: %s", bot_id)
             self.bot_instances[bot_id].message_daemon.stop()
             self.bot_instances[bot_id].music_daemon.stop()
+            self.bot_instances[bot_id].bot_instance.destroy(bot_id)
             self.bot_instances.pop(bot_id)
 
     def _loop(self):

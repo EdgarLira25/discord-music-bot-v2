@@ -130,3 +130,9 @@ class Bot(metaclass=SingletonBotMeta):
 -help -> Lista Comandos```
 """
         )
+
+    @classmethod
+    def destroy(cls, instance_id: int):
+        "Destrói instância singleton do Bot"
+        if instance_id in cls._instances:
+            del cls._instances[instance_id]
