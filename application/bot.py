@@ -1,7 +1,7 @@
 import asyncio
-from concurrent.futures import ThreadPoolExecutor
+from ctypes import c_int16, pointer
 from logging import getLogger
-from threading import Lock
+from threading import Lock, Thread
 from typing import Optional
 from colorama import Fore, Style
 from discord import FFmpegPCMAudio, TextChannel, VoiceClient
@@ -43,8 +43,19 @@ class Bot(metaclass=SingletonBotMeta):
         self.music_manager: QueueManager[MusicEvent] = music_manager_provider
         self.counter = SongsCounter()
 
-    def play(self, event: MusicEvent):
+    def _count_music_safely(self, title: str) -> int:
+        "Camada de Segurança para caso a rede esteja instável"
+        x = c_int16()
 
+        def wrapper():
+            pointer(x).contents.value = self.counter.add(title)
+
+        t = Thread(target=wrapper)
+        t.start()
+        t.join(2)
+        return x.value
+
+    def play(self, event: MusicEvent):
         match event.type_url:
             case "audio":
                 url = event.source
@@ -56,33 +67,15 @@ class Bot(metaclass=SingletonBotMeta):
                     url = event.source
                 else:
                     return
-
-        self.counter.add(event.title)
-
-        for attempt in range(5):
-            with ThreadPoolExecutor() as executor:
-                future = executor.submit(
-                    self.voice_client.play,
-                    FFmpegPCMAudio(
-                        url,
-                        before_options="-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5",
-                        options="-vn",
-                    ),
-                )
-                try:
-                    future.result(timeout=5)
-                    self.send(
-                        f"""Tocando -> {event.title}, pela {self.counter.get(event.title)}° vez"""
-                    )
-                    break
-                except TimeoutError:
-                    logs.warning(
-                        "%s° Falha ao inicializar música, tentando novamente...",
-                        attempt + 1,
-                    )
-        else:
-            logs.error("Discord Falhou em inicializar música para %s", self.instance_id)
-            self.send("Falha ao iniciar música...")
+        self.voice_client.play(
+            FFmpegPCMAudio(
+                url,
+                before_options="-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5",
+                options="-vn",
+            )
+        )
+        count = self._count_music_safely(event.title)
+        self.send(f"Tocando -> {event.title}{f' - {count}ª vez' if count else ''}")
 
     def skip(self) -> None:
         self.voice_client.stop()
