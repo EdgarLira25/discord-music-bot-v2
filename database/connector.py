@@ -5,7 +5,7 @@ from database.models.base import Base
 from settings.consts import DATABASE_URI
 
 engine = create_engine(
-    url=DATABASE_URI, enable_from_linting=False, pool_recycle=1800, pool_pre_ping=True
+    url=DATABASE_URI, enable_from_linting=False, pool_recycle=300, pool_pre_ping=True
 )
 
 
