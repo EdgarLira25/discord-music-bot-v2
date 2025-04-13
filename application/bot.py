@@ -1,4 +1,5 @@
 import asyncio
+from concurrent.futures import ThreadPoolExecutor
 from logging import getLogger
 from threading import Lock
 from typing import Optional
@@ -57,16 +58,31 @@ class Bot(metaclass=SingletonBotMeta):
                     return
 
         self.counter.add(event.title)
-        self.voice_client.play(
-            FFmpegPCMAudio(
-                url,
-                before_options="-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5",
-                options="-vn",
-            )
-        )
-        self.send(
-            f"""Tocando -> {event.title}, pela {self.counter.get(event.title)}° vez"""
-        )
+
+        for attempt in range(5):
+            with ThreadPoolExecutor() as executor:
+                future = executor.submit(
+                    self.voice_client.play,
+                    FFmpegPCMAudio(
+                        url,
+                        before_options="-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5",
+                        options="-vn",
+                    ),
+                )
+                try:
+                    future.result(timeout=5)
+                    self.send(
+                        f"""Tocando -> {event.title}, pela {self.counter.get(event.title)}° vez"""
+                    )
+                    break
+                except TimeoutError:
+                    logs.warning(
+                        "%s° Falha ao inicializar música, tentando novamente...",
+                        attempt + 1,
+                    )
+        else:
+            logs.error("Discord Falhou em inicializar música para %s", self.instance_id)
+            self.send("Falha ao iniciar música...")
 
     def skip(self) -> None:
         self.voice_client.stop()
@@ -135,4 +151,4 @@ class Bot(metaclass=SingletonBotMeta):
     def destroy(cls, instance_id: int):
         "Destrói instância singleton do Bot"
         if instance_id in cls._instances:
-            del cls._instances[instance_id]
+            cls._instances.pop(instance_id)
