@@ -48,13 +48,16 @@ def init_basic_config():
     spam = logging.FileHandler("spam.log")
     spam.setLevel(logging.DEBUG)
 
+    info = logging.FileHandler("info.log")
+    info.setLevel(logging.INFO)
+
     basic = logging.StreamHandler()
     basic.setLevel(logging.INFO)
     basic.setFormatter(ColoredFormatter())
 
     logging.basicConfig(
         level=logging.DEBUG,
-        handlers=[spam, basic],
+        handlers=[spam, basic, info],
     )
 
     logging.getLogger("").info("🔥 Sistemas de Logs Iniciado! 🔥")

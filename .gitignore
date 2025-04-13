@@ -8,6 +8,7 @@ venv
 
 #logs
 spam.log
+info.log
 
 # sqlite usado em PROD, caso não tenha especificado nenhum
 music.db
