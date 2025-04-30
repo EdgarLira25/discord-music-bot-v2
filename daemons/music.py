@@ -30,6 +30,7 @@ class MusicEventDaemon(threading.Thread):
             self.bot.voice_client
             and self.queue_manager.size() > 0
             and not self.bot.voice_client.is_playing()
+            and not self.bot.voice_client.is_paused()
         )
 
     def _loop(self):
