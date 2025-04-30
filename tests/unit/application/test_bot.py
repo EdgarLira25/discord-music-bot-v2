@@ -17,6 +17,13 @@ def start_loop(loop):
     loop.run_forever()
 
 
+@pytest.fixture(scope="function", autouse=True)
+def mock_count_music_safely():
+    "Evitar warnings de ctypes + pytest"
+    with patch.object(Bot, "_count_music_safely"):
+        yield
+
+
 @pytest.fixture(name="music_events")
 def music_events_fixture():
     return [
