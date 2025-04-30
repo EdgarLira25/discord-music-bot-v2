@@ -21,6 +21,9 @@ class VoiceClientMock:
     def pause(self):
         return None
 
+    def is_paused(self):
+        return False
+
     def resume(self):
         return None
 

@@ -9,6 +9,8 @@ from settings.consts import MONITOR_TIME
 
 logs = getLogger(__name__)
 
+# pylint: disable=too-many-boolean-expressions
+
 
 class MonitorDaemon(threading.Thread):
 
@@ -36,6 +38,7 @@ class MonitorDaemon(threading.Thread):
                     and instance.music_event_queue.size() == 0
                     and instance.bot_instance.voice_client
                     and not instance.bot_instance.voice_client.is_playing()
+                    and not instance.bot_instance.voice_client.is_paused()
                 ):
                     instances_to_kill.append(bot_id)
 
