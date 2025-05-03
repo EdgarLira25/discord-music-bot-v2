@@ -1,6 +1,11 @@
 from dataclasses import dataclass
+from typing import overload
 from unittest.mock import MagicMock
-from discord import ClientException, Message, TextChannel, VoiceClient
+from discord import ClientException, Message, TextChannel, VoiceClient, Member
+from discord.channel import VocalGuildChannel
+
+
+from models.message import MessageEvent
 
 # pylint: skip-file
 
@@ -11,7 +16,7 @@ class GuildMock:
     name = "Teste"
 
 
-class ChannelMock:
+class ChannelMock(VocalGuildChannel):
     def __init__(self, should_raise: bool) -> None:
         self.should_raise = should_raise
 
@@ -51,3 +56,12 @@ class MessageMock(Message):
         self.author = author
         self.channel = channel
         self.content = content
+
+
+@dataclass()
+class MessageEventMock(MessageEvent):
+    guild_id: int | None
+    voice_channel: ChannelMock | None
+    author: AuthorMock | None
+    channel: TextChannelMock | None
+    content: str | None

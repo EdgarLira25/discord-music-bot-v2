@@ -1,10 +1,11 @@
 from asyncio import AbstractEventLoop
 from typing import Any
+from discord import VoiceClient
 
 # pylint: skip-file
 
 
-class VoiceClientMock:
+class VoiceClientMock(VoiceClient):
     def __init__(
         self,
         return_is_playing: bool,

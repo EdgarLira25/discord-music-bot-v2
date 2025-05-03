@@ -2,11 +2,11 @@ from asyncio import AbstractEventLoop
 from datetime import datetime
 from logging import getLogger
 from queue import Queue
-from discord import Message
 from application.bot import Bot
 from daemons.message import create_messaging_daemon
 from daemons.music import create_music_daemon
 from models.bot import BotId, Bots, BotServices
+from models.message import MessageEvent
 from models.music import MusicEvent
 from services.queue_manager import QueueManager
 
@@ -22,8 +22,8 @@ class InstanceManager:
         logs.info("Iniciando nova instância para servidor: %s", bot_id)
 
         music_queue_manager = QueueManager(Queue[MusicEvent]())
-        event_queue_manager = QueueManager(Queue[Message]())
-        bot = Bot(bot_id, channel, None, music_queue_manager)
+        event_queue_manager = QueueManager(Queue[MessageEvent]())
+        bot = Bot(bot_id, channel, None, music_queue_manager)  # type: ignore
 
         return BotServices(
             bot_instance=bot,
@@ -35,7 +35,9 @@ class InstanceManager:
             ),
         )
 
-    def add_event(self, bot_id: BotId, message: Message, event_loop: AbstractEventLoop):
+    def add_event(
+        self, bot_id: BotId, message: MessageEvent, event_loop: AbstractEventLoop
+    ):
 
         if bot_id not in self.bots:
             self.bots[bot_id] = self.init_bot_services(bot_id, message, event_loop)

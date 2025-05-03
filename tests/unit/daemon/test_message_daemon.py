@@ -6,11 +6,17 @@ from discord import Message
 import pytest
 from application.bot import Bot
 from daemons.message import MessageEventDaemon, create_messaging_daemon
+from models.message import MessageEvent
 from models.music import MusicEvent
 from services.queue_manager import QueueManager
 from services.youtube import Youtube
 from tests.unit.mocks.bot import BotMock
-from tests.unit.mocks.message import AuthorMock, MessageMock, TextChannelMock, VoiceMock
+from tests.unit.mocks.message import (
+    AuthorMock,
+    ChannelMock,
+    MessageEventMock,
+    TextChannelMock,
+)
 from tests.unit.mocks.voice_client import VoiceClientMock
 
 # pylint: disable=protected-access
@@ -19,6 +25,17 @@ from tests.unit.mocks.voice_client import VoiceClientMock
 def start_loop(loop):
     asyncio.set_event_loop(loop)
     loop.run_forever()
+
+
+@pytest.fixture(scope="function", name="use_message_event")
+def use_message_event_fixture():
+    return MessageEventMock(
+        guild_id=50,
+        voice_channel=ChannelMock(should_raise=False),
+        author=AuthorMock(True),
+        channel=TextChannelMock("TESTE"),
+        content="-p teste",
+    )
 
 
 @pytest.fixture(scope="function", autouse=True)
@@ -30,7 +47,7 @@ def auto_close_event_loop():
 
 @pytest.fixture(name="message_daemon")
 def message_daemon_fixture():
-    event_manager = QueueManager(Queue[Message]())
+    event_manager = QueueManager(Queue[MessageEvent]())
     music_manager = QueueManager(Queue[MusicEvent]())
     bot = BotMock(VoiceClientMock(False))
     event_loop = asyncio.new_event_loop()
@@ -40,21 +57,19 @@ def message_daemon_fixture():
 
 
 @patch.object(MessageEventDaemon, "_sync_bot_variables", MagicMock())
-def test_handle_event_variables(message_daemon: MessageEventDaemon):
-    message_daemon.event_queue.add(
-        MessageMock(None, AuthorMock(True), channel=None, content="-p abcde")
-    )
+def test_handle_event_variables(
+    message_daemon: MessageEventDaemon, use_message_event: MessageEventMock
+):
+    message_daemon.event_queue.add(use_message_event)
     command, content = message_daemon._handle_event_variables()
     assert isinstance(command, str)
     assert isinstance(content, list)
 
 
-def test_reconnect_success(message_daemon: MessageEventDaemon):
-    assert message_daemon._reconnect(
-        MessageMock(
-            None, AuthorMock(True, VoiceMock()), channel=None, content="-p abcde"
-        )
-    )
+def test_reconnect_success(
+    message_daemon: MessageEventDaemon, use_message_event: MessageEventMock
+):
+    assert message_daemon._reconnect(use_message_event)
 
 
 @patch.object(Youtube, "search_single_song")
@@ -87,10 +102,11 @@ def test_add_music_with_link(
 
 def test_reconnect_fail(message_daemon: MessageEventDaemon):
     assert not message_daemon._reconnect(
-        MessageMock(
-            None,
-            AuthorMock(True, VoiceMock(should_raise=True)),
-            channel=None,
+        MessageEventMock(
+            guild_id=1,
+            voice_channel=ChannelMock(should_raise=True),
+            author=AuthorMock(True),
+            channel=TextChannelMock("teste"),
             content="-p abcde",
         )
     )
@@ -98,15 +114,15 @@ def test_reconnect_fail(message_daemon: MessageEventDaemon):
 
 @patch.object(MessageEventDaemon, "_reconnect")
 def test_sync_bot_variables(
-    reconnect_mock: MagicMock, message_daemon: MessageEventDaemon
+    reconnect_mock: MagicMock,
+    message_daemon: MessageEventDaemon,
+    use_message_event: MessageEventMock,
 ):
     reconnect_mock.return_value = "Voice Novo"
     text_channel_novo = TextChannelMock("Channel Novo")
-    message_daemon.bot.voice_channel = "Voice Antigo"
+    message_daemon.bot.voice_channel = "Voice Antigo"  # type:ignore
     message_daemon.bot.message_channel = "Message Antigo"  # type:ignore
-    message_daemon._sync_bot_variables(
-        MessageMock(None, AuthorMock(False), channel=text_channel_novo, content="")
-    )
+    message_daemon._sync_bot_variables(use_message_event)
     assert message_daemon.bot.message_channel == text_channel_novo
     assert str(message_daemon.bot.voice_client) == "Voice Novo"
 
@@ -115,7 +131,7 @@ def test_sync_bot_variables(
 def test_create_messaging_daemon(mock_loop):
     mock_loop.return_value = None
     event_manager = QueueManager(Queue[MusicEvent]())
-    message_manager = QueueManager(Queue[Message]())
+    message_manager = QueueManager(Queue[MessageEvent]())
     bot = BotMock(VoiceClientMock(False))
     event_loop = asyncio.new_event_loop()
     asyncio.set_event_loop(event_loop)
