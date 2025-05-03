@@ -33,14 +33,14 @@ class Bot(metaclass=SingletonBotMeta):
     def __init__(
         self,
         instance_id: int,
-        message_channel,
-        voice_client,
+        message_channel: TextChannel,
+        voice_client: VoiceClient,
         music_manager_provider: QueueManager[MusicEvent],
     ) -> None:
-        self.instance_id: int = instance_id
-        self.message_channel: TextChannel = message_channel
-        self.voice_client: VoiceClient = voice_client
-        self.music_manager: QueueManager[MusicEvent] = music_manager_provider
+        self.instance_id = instance_id
+        self.message_channel = message_channel
+        self.voice_client = voice_client
+        self.music_manager = music_manager_provider
         self.counter = SongsCounter()
 
     def _count_music_safely(self, title: str) -> int:

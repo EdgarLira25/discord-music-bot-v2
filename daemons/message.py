@@ -4,8 +4,9 @@ from logging import getLogger
 from asyncio import AbstractEventLoop, run_coroutine_threadsafe
 import threading
 import time
-from discord import ClientException, Message
+from discord import ClientException
 from application.bot import Bot
+from models.message import MessageEvent
 from models.music import MusicEvent
 from services.queue_manager import QueueManager
 from services.spotify import Spotify
@@ -19,7 +20,7 @@ class MessageEventDaemon(threading.Thread):
 
     def __init__(
         self,
-        event_queue: QueueManager[Message],
+        event_queue: QueueManager[MessageEvent],
         music_queue: QueueManager[MusicEvent],
         bot_provider: Bot,
         event_loop: AbstractEventLoop,
@@ -32,23 +33,23 @@ class MessageEventDaemon(threading.Thread):
         self.voice_channel = None
         self.is_running = True
 
-    def _reconnect(self, message: Message):
+    def _reconnect(self, message: MessageEvent):
         try:
             return run_coroutine_threadsafe(
-                message.author.voice.channel.connect(),  # type: ignore
+                message.voice_channel.connect(),
                 self.event_loop,
             ).result(10)
         except ClientException:
             return None
 
-    def _sync_bot_variables(self, message: Message):
+    def _sync_bot_variables(self, message: MessageEvent):
         voice_client = self._reconnect(message)
         if (
             self.bot.message_channel != message.channel
             or self.bot.voice_client != voice_client
         ):
             logs.info("Sincronizando canais")
-            self.bot.message_channel = message.channel  # type: ignore
+            self.bot.message_channel = message.channel
             if voice_client is not None:
                 self.bot.voice_client = voice_client
 
@@ -127,7 +128,7 @@ class MessageEventDaemon(threading.Thread):
 
 
 def create_messaging_daemon(
-    event_manager: QueueManager[Message],
+    event_manager: QueueManager[MessageEvent],
     music_manager: QueueManager[MusicEvent],
     bot_provider: Bot,
     event_loop: AbstractEventLoop,
