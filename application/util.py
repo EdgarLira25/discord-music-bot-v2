@@ -1,7 +1,10 @@
+from asyncio import AbstractEventLoop
 import unicodedata
 from discord import Member, Message, Interaction, TextChannel
 from discord.channel import VocalGuildChannel
+from models.bot import Bots
 from models.message import MessageEvent
+from services.instance_manager import InstanceManager
 
 # pylint: disable=too-many-boolean-expressions
 
@@ -41,3 +44,14 @@ def create_message_event(
             content,
         )
     return None
+
+
+def publish_event(
+    source: Interaction | Message,
+    bots: Bots,
+    loop: AbstractEventLoop,
+    prefix="",
+    item="",
+):
+    if message_event := create_message_event(source, prefix, item):
+        InstanceManager(bots).add_event(message_event.guild_id, message_event, loop)
