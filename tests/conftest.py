@@ -30,7 +30,7 @@ def mock_message_event(*_):
     )
 
 
-patch("application.util.create_message_event", mock_message_event).start()
+patch.object(PublisherMessage, "create_message_event", mock_message_event).start()
 
 
 @pytest.fixture(scope="session", autouse=True)
