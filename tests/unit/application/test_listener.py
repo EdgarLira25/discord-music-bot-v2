@@ -5,6 +5,7 @@ from discord import Intents
 import pytest
 from application.commands import BaseCommands
 from application.listener import Listener
+from application.publisher_message import PublisherMessage
 from models.bot import BotServices, Bots
 from models.message import MessageEvent
 from services.instance_manager import InstanceManager
@@ -22,8 +23,9 @@ from tests.unit.mocks.message import (
 def listener_fixture():
     bots = Bots()
     instance_manager = InstanceManager(bots)
-    base_command = BaseCommands(bots, instance_manager)
-    return Listener(Intents.all(), bots, base_command)
+    publisher_message_event = PublisherMessage(instance_manager)
+    base_command = BaseCommands(instance_manager, publisher_message_event)
+    return Listener(Intents.all(), base_command, publisher_message_event)
 
 
 @pytest.fixture(scope="function", autouse=True)
@@ -61,8 +63,8 @@ async def test_on_message_with_pre_none_guild_id(
 ):
     message = message_mock
     await listener.on_message(message=message)
-    assert len(listener.bots) == 1
-    assert listener.bots.get(1)
+    assert len(listener.publisher.instance_manager.bots) == 1
+    assert listener.publisher.instance_manager.bots.get(1)
 
 
 @pytest.mark.asyncio
@@ -73,8 +75,8 @@ async def test_on_message_with_pre_exist_guild_id(
     message = message_mock
     await listener.on_message(message=message)
     message = message_mock
-    assert len(listener.bots) == 1
-    assert listener.bots.get(1)
+    assert len(listener.publisher.instance_manager.bots) == 1
+    assert listener.publisher.instance_manager.bots.get(1)
 
 
 @pytest.mark.asyncio
