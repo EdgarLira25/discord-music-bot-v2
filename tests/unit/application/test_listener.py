@@ -3,6 +3,7 @@ from queue import Queue
 from unittest.mock import AsyncMock, MagicMock, patch
 from discord import Intents
 import pytest
+from application.commands import BaseCommands
 from application.listener import Listener
 from models.bot import BotServices, Bots
 from models.message import MessageEvent
@@ -19,7 +20,10 @@ from tests.unit.mocks.message import (
 
 @pytest.fixture(name="listener")
 def listener_fixture():
-    return Listener(intents=Intents.all(), bots=Bots())
+    bots = Bots()
+    instance_manager = InstanceManager(bots)
+    base_command = BaseCommands(bots, instance_manager)
+    return Listener(Intents.all(), bots, base_command)
 
 
 @pytest.fixture(scope="function", autouse=True)
