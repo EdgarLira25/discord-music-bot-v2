@@ -1,5 +1,6 @@
 """Módulo de gerenciamento para contagem de músicas tocadas"""
 
+from functools import lru_cache
 from sqlalchemy import insert, select, update
 from database.connector import Database
 from database.models.songs import SongsDao
@@ -30,3 +31,7 @@ class SongsCounter:
         )
 
         return query["count"] if query else 0
+
+    @lru_cache(maxsize=1)
+    def get_all(self) -> list[dict]:
+        return self.db.query(select(self.songs.name))

@@ -15,17 +15,18 @@ class Database:
         session = sessionmaker(bind=engine)
         with session() as session:
             result = session.execute(query).fetchone()
-            session.close()
-            if not result:
-                return {}
-            return result._asdict()
+            return result._asdict() if result else {}
+
+    def query(self, query: Executable) -> list[dict]:
+        session = sessionmaker(bind=engine)
+        with session() as session:
+            return [result._asdict() for result in session.execute(query).fetchall()]
 
     def statement(self, statement: Executable):
         session = sessionmaker(bind=engine)
         with session() as session:
             session.execute(statement)
             session.commit()
-            session.close()
 
     def migrate_all(self):
         Base.metadata.create_all(engine)
